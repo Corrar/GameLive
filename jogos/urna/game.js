@@ -18,7 +18,6 @@ ligarSom(cfg.som);
 palco.style.setProperty('--cor-a', lados[0].cor);
 palco.style.setProperty('--cor-b', lados[1].cor);
 $('titulo').textContent = cfg.titulo ?? '';
-$('marca').textContent = cfg.marca ?? '';
 
 // presentes de cada lado: emoji + "+N VOTOS"
 lados.forEach((lado, i) => {
@@ -38,16 +37,6 @@ lados.forEach((lado, i) => {
     $('presentes' + i).appendChild(chip);
   }
 });
-
-// teclado da urna
-const TECLAS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
-for (const t of TECLAS) {
-  const k = document.createElement('span');
-  k.className = 'tecla' + (t === '0' ? ' zero' : '');
-  k.dataset.tecla = t;
-  k.textContent = t;
-  $('teclas').appendChild(k);
-}
 
 const salvo = lembrar('urna', null);
 let votos = Array.isArray(salvo?.votos) && salvo.votos.every(Number.isFinite) ? salvo.votos : [0, 0];
@@ -98,12 +87,12 @@ function mostrarCombo(i, n, ganho) {
 }
 
 function mostrarUltimo(ev, i) {
-  const u = $('ultimo');
+  const u = $('ultimo' + i);
   u.style.setProperty('--cor', lados[i].cor);
   const nome = document.createElement('span');
   nome.className = 'quem txt-jogo';
   nome.textContent = ev.nome || ev.user;
-  u.replaceChildren(avatar(ev, 'grande'), nome);
+  u.replaceChildren(avatar(ev), nome);
   animar(u);
 }
 
@@ -119,71 +108,105 @@ function mostrarVirada(i) {
   setTimeout(() => v.remove(), 2700);
 }
 
-/* ---------- urna eletrônica: o dedo digita o número do lado e confirma ---------- */
-const fila = [];
-let digitando = false;
+/* ---------- urnas eletrônicas: a mão de cada lado digita o número e confirma ---------- */
 const dormir = (ms) => new Promise(r => setTimeout(r, ms));
+const TECLAS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
 
-function posicionarDedo(alvo) {
-  const urna = $('urna').getBoundingClientRect();
-  const r = alvo.getBoundingClientRect();
-  const escala = urna.width / $('urna').offsetWidth;
-  const x = (r.left + r.width / 2 - urna.left) / escala - 30;
-  const y = (r.top + r.height / 2 - urna.top) / escala - 4;
-  $('dedo').style.transform = `translate(${x}px, ${y}px)`;
-}
-
-async function apertar(alvo) {
-  posicionarDedo(alvo);
-  await dormir(170);
-  alvo.classList.add('apertada');
-  tocar('tecla');
-  await dormir(110);
-  alvo.classList.remove('apertada');
-}
-
-function telaDoLado(i, digitos) {
+function criarUrna(i) {
+  const raiz = $('urna' + i);
+  raiz.appendChild($('modelo-urna').content.cloneNode(true));
+  raiz.style.setProperty('--cor', lados[i].cor);
+  const q = (sel) => raiz.querySelector(sel);
+  q('.marca').textContent = cfg.marca ?? '';
+  for (const t of TECLAS) {
+    const k = document.createElement('span');
+    k.className = 'tecla' + (t === '0' ? ' zero' : '');
+    k.dataset.tecla = t;
+    k.textContent = t;
+    q('.teclas').appendChild(k);
+  }
   const numero = String(lados[i].numero ?? i + 1);
-  $('digitos').replaceChildren(...[...numero].map((_, k) => {
-    const d = document.createElement('span');
-    d.className = 'digito' + (k === digitos ? ' cursor' : '');
-    d.textContent = k < digitos ? numero[k] : '';
-    return d;
-  }));
-  const completo = digitos >= numero.length;
-  const c = $('candidato');
-  c.style.setProperty('--cor', lados[i].cor);
-  if (completo && lados[i].imagem) {
-    const img = new Image();
-    img.alt = '';
-    img.src = lados[i].imagem;
-    c.replaceChildren(img);
-  } else {
-    c.textContent = completo ? lados[i].nome.trim().split(/\s+/).map(p => p[0]).join('').slice(0, 2).toUpperCase() : '';
+  const mao = q('.mao');
+  // braço sai pelo canto de fora: esquerda embaixo no lado A, direita embaixo no lado B (espelhado)
+  const pose = i === 0 ? 'rotate(32deg) scale(.78)' : 'rotate(-32deg) scale(-.78, .78)';
+  const centro = (el) => {
+    let x = el.offsetWidth / 2, y = el.offsetHeight / 2;
+    for (let n = el; n && n !== raiz; n = n.offsetParent) { x += n.offsetLeft; y += n.offsetTop; }
+    return { x, y };
+  };
+  const mirar = (el, apertando) => {
+    const { x, y } = centro(el);
+    mao.style.transform = `translate(${x - 100}px, ${y - 10 - (apertando ? 0 : 26)}px) ${pose}`;
+    return { x, y };
+  };
+
+  function tela(digitados) {
+    q('.digitos').replaceChildren(...[...numero].map((_, k) => {
+      const d = document.createElement('span');
+      d.className = 'digito' + (k === digitados ? ' cursor' : '');
+      d.textContent = k < digitados ? numero[k] : '';
+      return d;
+    }));
+    const completo = digitados >= numero.length;
+    const c = q('.candidato');
+    c.style.setProperty('--cor', lados[i].cor);
+    c.classList.toggle('on', completo);
+    if (completo && lados[i].imagem) {
+      const img = new Image();
+      img.alt = '';
+      img.src = lados[i].imagem;
+      c.replaceChildren(img);
+    } else {
+      c.textContent = lados[i].nome.trim().split(/\s+/).map(p => p[0]).join('').slice(0, 2).toUpperCase();
+    }
+    q('.nome-cand').textContent = completo ? lados[i].nome : '';
   }
-  $('nomeCand').textContent = completo ? lados[i].nome : '';
+
+  async function apertar(alvo) {
+    mirar(alvo, false);
+    await dormir(150);
+    const { x, y } = mirar(alvo, true);
+    await dormir(90);
+    alvo.classList.add('apertada');
+    const c = document.createElement('span');
+    c.className = 'clique';
+    c.style.cssText = `left:${x}px;top:${y}px`;
+    c.addEventListener('animationend', () => c.remove(), { once: true });
+    raiz.appendChild(c);
+    tocar('tecla');
+    await dormir(100);
+    alvo.classList.remove('apertada');
+  }
+
+  let pendentes = 0, digitando = false;
+  async function digitar() {
+    if (digitando) return;
+    digitando = true;
+    while (pendentes > 0) {
+      pendentes--;
+      tela(0);
+      for (let k = 0; k < numero.length; k++) {
+        await apertar(q(`.tecla[data-tecla="${numero[k]}"]`));
+        tela(k + 1);
+      }
+      await dormir(160);
+      await apertar(q('.botao.confirma'));
+      animar(q('.fim'), 'on');
+      await dormir(pendentes ? 300 : 800);
+    }
+    mirar(q('.tecla[data-tecla="5"]'), false);
+    digitando = false;
+  }
+
+  tela(0);
+  mirar(q('.tecla[data-tecla="5"]'), false);
+  return {
+    // cada presente vira uma digitação; no máximo 2 esperando para não atrasar demais
+    votar() { pendentes = Math.min(pendentes + 1, 2); digitar(); }
+  };
 }
 
-async function digitar() {
-  if (digitando) return;
-  digitando = true;
-  $('dedo').classList.add('on');
-  while (fila.length) {
-    const i = fila.shift();
-    const numero = String(lados[i].numero ?? i + 1);
-    telaDoLado(i, 0);
-    for (let k = 0; k < numero.length; k++) {
-      await apertar(document.querySelector(`.tecla[data-tecla="${numero[k]}"]`));
-      telaDoLado(i, k + 1);
-    }
-    await dormir(180);
-    await apertar($('confirma'));
-    animar($('fim'), 'on');
-    await dormir(fila.length ? 380 : 900);
-  }
-  $('dedo').classList.remove('on');
-  digitando = false;
-}
+const urnas = [criarUrna(0), criarUrna(1)];
 
 /* ---------- rodada ---------- */
 const rodada = cfg.rodada ?? {};
@@ -258,8 +281,7 @@ function aoEvento(ev) {
     pintarRanking($('ranking'), ranking.top(5), { destaque: ev.user });
     avisar(html`<span class="l${i}"><b>${ev.nome || ev.user}</b> ${ev.quantidade}× ${ev.presenteNome} <span class="mais">+${n}</span></span>`);
 
-    if (fila.length < 2) fila.push(i);
-    digitar();
+    urnas[i].votar();
 
     const depois = lider();
     if (antes !== -1 && depois !== -1 && antes !== depois) mostrarVirada(depois);
@@ -282,7 +304,6 @@ teclas({
   t: () => { for (let k = 0; k < 5; k++) setTimeout(() => aoEvento(presenteDoLado(Math.round(Math.random()), 1 + Math.floor(Math.random() * 5))), k * 250); }
 });
 
-telaDoLado(0, 0);
 desenhar(false);
 crono?.iniciar();
 conectar(aoEvento);
