@@ -11,6 +11,12 @@
         ],
         "createdAt": "2026-10-16T17:53:15.335Z",
         "reason": "Claude: .palco é o quadro 9:16 capturado no OBS; cortar o que sai dele é intencional"
+      },
+      {
+        "rule": "bounce-easing",
+        "value": "cubic-bezier(.2, 1.4, .4, 1)",
+        "createdAt": "2026-10-16T17:57:06.423Z",
+        "reason": "Claude: overshoot proposital na faixa de vencedor dos jogos (comemoração de rodada)"
       }
     ]
   }

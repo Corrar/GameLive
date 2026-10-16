@@ -37,8 +37,8 @@ function lider() {
 function desenhar() {
   const total = votos[0] + votos[1];
   const pctA = total ? (votos[0] / total) * 100 : 50;
-  $('seg0').style.width = pctA + '%';
-  $('seg1').style.width = (100 - pctA) + '%';
+  // lado B é a trilha inteira; o lado A cobre a fração dele com scaleX (sem animar width)
+  $('seg0').style.transform = `scaleX(${pctA / 100})`;
   $('pct0').textContent = Math.round(pctA) + '%';
   $('pct1').textContent = (100 - Math.round(pctA)) + '%';
   votos.forEach((v, i) => { $('total' + i).textContent = `${v.toLocaleString('pt-BR')} ${v === 1 ? 'voto' : 'votos'}`; });

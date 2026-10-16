@@ -19,11 +19,12 @@
   .pct{font-size:64px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--cor);line-height:1}
   .barra{position:relative;display:flex;height:66px;margin-top:22px;border-radius:33px;overflow:hidden;background:#1b2036;
     border:3px solid rgba(255,255,255,.18)}
-  .seg{height:100%;background:var(--cor);transition:width .45s cubic-bezier(.2,.8,.3,1),filter .3s}
+  .seg{position:absolute;inset:0;background:var(--cor);transition:filter .3s}
+  .seg.l0{z-index:1;transform-origin:left center;transition:transform .45s cubic-bezier(.2,.8,.3,1),filter .3s}
   .seg.l0{background:linear-gradient(90deg,color-mix(in srgb,var(--cor) 70%,#000),var(--cor))}
   .seg.l1{background:linear-gradient(90deg,var(--cor),color-mix(in srgb,var(--cor) 70%,#000))}
   .seg.pulso{filter:brightness(1.45)}
-  .meio{position:absolute;left:50%;top:0;bottom:0;width:4px;margin-left:-2px;background:rgba(255,255,255,.55)}
+  .meio{position:absolute;z-index:2;left:50%;top:0;bottom:0;width:4px;margin-left:-2px;background:rgba(255,255,255,.55)}
   .totais{display:flex;justify-content:space-between;margin-top:14px;font-size:30px;font-weight:700;color:rgba(255,255,255,.75);font-variant-numeric:tabular-nums}
   .l0{--cor:var(--cor-a)}.l1{--cor:var(--cor-b)}
   .avisos{position:absolute;left:40px;right:40px;top:420px}
