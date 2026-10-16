@@ -17,6 +17,15 @@
         "value": "cubic-bezier(.2, 1.4, .4, 1)",
         "createdAt": "2026-10-16T17:57:06.423Z",
         "reason": "Claude: overshoot proposital na faixa de vencedor dos jogos (comemoração de rodada)"
+      },
+      {
+        "rule": "wide-tracking",
+        "value": "*",
+        "files": [
+          "jogos/corrida/index.html"
+        ],
+        "createdAt": "2026-10-16T18:08:20.064Z",
+        "reason": "Claude: tracking .16em só nos títulos curtos em caixa alta dos painéis (POSIÇÕES, VITÓRIAS)"
       }
     ]
   }

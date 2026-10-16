@@ -1,0 +1,12 @@
+{
+  "fundo": "#0b0d17",
+  "voltas": 3,
+  "maxCarros": 12,
+  "velocidade": 150,
+  "acoes": {
+    "acelerar": ["Rose"],
+    "nitro": ["GG"],
+    "oleo": ["Doughnut"],
+    "pular": ["Galaxy"]
+  }
+}
