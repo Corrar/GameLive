@@ -34,6 +34,7 @@ body{
   padding:6px 9px;border-radius:999px;background:rgba(0,0,0,.55);color:#ffb3b3;opacity:.7
 }
 .selo-status.ok{color:#9dffcf}
+.selo-status.discreto{width:10px;height:10px;padding:0;overflow:hidden;color:transparent;background:#3df2c2;opacity:.45}
 
 /* faixa de vencedor reaproveitável pelos jogos com rodada */
 .vencedor{

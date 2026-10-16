@@ -15,7 +15,7 @@ Jogos interativos para **TikTok LIVE**: cada comentário e presente da audiênci
 ![Node](https://img.shields.io/badge/node-%E2%89%A520-3df2c2?style=flat-square&labelColor=0b0d17)
 ![HTML5](https://img.shields.io/badge/jogos-HTML5%20sem%20build-ff3d7f?style=flat-square&labelColor=0b0d17)
 ![OBS](https://img.shields.io/badge/captura-OBS%20%C2%B7%20LIVE%20Studio-9aa3bd?style=flat-square&labelColor=0b0d17)
-![Status](https://img.shields.io/badge/status-em%20desenvolvimento-ffc23d?style=flat-square&labelColor=0b0d17)
+![Status](https://img.shields.io/badge/jogos-8%20prontos-3df2c2?style=flat-square&labelColor=0b0d17)
 
 </div>
 
@@ -48,14 +48,14 @@ O **GameLive** é um conjunto de jogos feitos para rodar *durante* uma live. O s
 
 | Jogo | Como o chat joga | Status |
 |---|---|---|
-| 🗳️ **Urna da Live** | Cada presente vira voto para um dos dois lados da barra | em desenvolvimento |
-| 🪢 **Cabo de Guerra** | Comente o seu time e puxe a corda; presente puxa mais forte | em desenvolvimento |
-| 🏎️ **Corrida do Chat** | Quem comenta entra na pista; presentes viram nitro e óleo | em desenvolvimento |
-| 🗼 **Torre Alta** | Presentes constroem e derrubam a torre | em desenvolvimento |
-| 🏰 **Torres Rivais** | Dois times, duas torres, quem chega primeiro na meta | em desenvolvimento |
-| 🐦 **Voo da Live** | O pássaro voa sozinho e o chat tenta derrubar | em desenvolvimento |
-| 🪁 **Céu de Pipas** | Cada comentário é uma pipa; presente corta a linha do rival | em desenvolvimento |
-| 🥊 **Briga da Live** | Escolha o lutador; presentes viram golpes | em desenvolvimento |
+| 🗳️ **Urna da Live** | Cada presente vira voto para um dos dois lados da barra | ✅ pronto |
+| 🪢 **Cabo de Guerra** | Comente o seu time e puxe a corda; presente puxa mais forte | ✅ pronto |
+| 🏎️ **Corrida do Chat** | Quem comenta entra na pista; presentes viram nitro e óleo | ✅ pronto |
+| 🗼 **Torre Alta** | Presentes constroem e derrubam a torre | ✅ pronto |
+| 🏰 **Torres Rivais** | Dois times, duas torres, quem chega primeiro na meta | ✅ pronto |
+| 🐦 **Voo da Live** | O pássaro voa sozinho e o chat tenta derrubar | ✅ pronto |
+| 🪁 **Céu de Pipas** | Cada comentário é uma pipa; presente corta a linha do rival | ✅ pronto |
+| 🥊 **Briga da Live** | Escolha o lutador; presentes viram golpes | ✅ pronto |
 
 ## Começando
 
@@ -94,8 +94,12 @@ Se a conexão começar a falhar por limite, crie uma chave em [eulerstream.com](
 ## Testes
 
 ```bash
-npm test
+npm test                                   # regra de presentes, conversão de eventos e kit
+npm run simular                            # em outro terminal, depois:
+node scripts/captura.mjs urna urna.png --teclas t   # abre o jogo no Chrome, aperta T e salva a tela
 ```
+
+O script de captura sai com erro se a página tiver qualquer erro de JavaScript.
 
 ## Avisos
 

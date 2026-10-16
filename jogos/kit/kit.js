@@ -143,7 +143,15 @@ export function conectar(aoEvento) {
   const selo = document.createElement('div');
   selo.className = 'selo-status';
   document.body.appendChild(selo);
-  const mostrar = (texto, ok) => { selo.textContent = texto; selo.classList.toggle('ok', ok); };
+  let timerDiscreto;
+  // conectado: vira só um ponto depois de 3 s, para não cobrir o placar dos jogos
+  const mostrar = (texto, ok) => {
+    selo.textContent = texto;
+    selo.classList.toggle('ok', ok);
+    selo.classList.remove('discreto');
+    clearTimeout(timerDiscreto);
+    if (ok) timerDiscreto = setTimeout(() => selo.classList.add('discreto'), 3000);
+  };
 
   function abrir() {
     const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/`);
