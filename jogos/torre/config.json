@@ -1,0 +1,12 @@
+{
+  "fundo": "#0b0d17",
+  "acoes": {
+    "bloco": ["Rose"],
+    "gigante": ["Finger Heart"],
+    "demolicao": ["GG"],
+    "martelo": ["Galaxy"]
+  },
+  "blocoGigante": 5,
+  "demolicao": 5,
+  "maxFila": 300
+}
