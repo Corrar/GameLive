@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Céu de Pipas</title>
+<link rel="stylesheet" href="../kit/kit.css">
+<style>
+  .topo{position:absolute;left:40px;top:30px;width:520px}
+  h1{margin:0;font-size:76px;font-weight:900;letter-spacing:-.02em;line-height:.95}
+  h1 span{color:#3df2c2}
+  .sub{margin:10px 0 14px;font-size:30px;font-weight:800;color:#ffc23d}
+  .legenda{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
+  .legenda span{padding:5px 14px;border-radius:999px;background:rgba(8,10,20,.6);border:2px solid rgba(255,255,255,.16);font-size:28px;font-weight:800}
+  .placar{position:absolute;right:40px;top:30px;width:440px;padding:18px 24px;border-radius:30px;
+    background:rgba(8,10,20,.78);border:2px solid rgba(255,61,127,.5);box-shadow:0 20px 40px -24px rgba(0,0,0,.9)}
+  .placar h2{margin:0 0 8px;font-size:26px;font-weight:900;letter-spacing:.14em;color:#ff7aa6}
+  .placar ol{list-style:none;margin:0;padding:0}
+  .placar li{display:flex;align-items:center;gap:10px;font-size:32px;font-weight:800;line-height:50px;white-space:nowrap}
+  .placar li b{flex:none;width:48px;color:#ffc23d}
+  .placar li span{flex:1;overflow:hidden;text-overflow:ellipsis}
+  .placar li em{flex:none;font-style:normal;font-weight:900;color:#3df2c2}
+  .placar .vazio{font-size:28px;line-height:1.3;white-space:normal;opacity:.85}
+  .avisos{position:absolute;left:40px;right:40px;top:1470px}
+</style>
+</head>
+<body>
+<div class="palco">
+  <canvas id="tela" width="1080" height="1920"></canvas>
+  <header class="topo">
+    <h1>CÉU DE <span>PIPAS</span></h1>
+    <div class="sub">💬 comente para soltar a sua pipa</div>
+    <div class="legenda" id="legenda"></div>
+  </header>
+  <section class="placar"><h2>✂️ QUEM MAIS CORTOU</h2><ol id="placar"></ol></section>
+  <div class="avisos" id="avisos"></div>
+</div>
+<script type="module" src="game.js"></script>
+</body>
+</html>

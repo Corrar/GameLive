@@ -1,0 +1,12 @@
+{
+  "fundo": "linear-gradient(180deg,#0b0d17 0%,#121a3d 45%,#2b1d4f 78%,#5a2350 100%)",
+  "maxPipas": 30,
+  "escudoMax": 5,
+  "acoes": {
+    "crescer": ["Rose"],
+    "cortar": ["GG"],
+    "cortarTres": ["Doughnut"],
+    "tempestade": ["Galaxy"]
+  },
+  "cortes": { "cortar": 1, "cortarTres": 3 }
+}
