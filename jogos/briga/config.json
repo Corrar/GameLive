@@ -1,11 +1,13 @@
 {
-  "fundo": "#0b0d17",
+  "fundo": "arena",
+  "som": true,
   "lutadores": [
-    { "nome": "Trovão", "cor": "#3df2c2" },
+    { "nome": "Trovão", "cor": "#2fe2b0" },
     { "nome": "Furacão", "cor": "#ff3d7f" }
   ],
   "palavras": { "A": ["A", "1"], "B": ["B", "2"] },
   "vida": 500,
+  "pausa": 5,
   "golpes": {
     "soco": { "presentes": ["Rose"], "dano": 5 },
     "chute": { "presentes": ["GG"], "dano": 10 },
