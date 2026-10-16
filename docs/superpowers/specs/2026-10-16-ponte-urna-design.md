@@ -113,9 +113,9 @@ em paralelo não se misturam; sequência nova do mesmo usuário após o fim reco
 - HTTP estático servindo a pasta `jogos/` em `/jogos/` (sem framework, `node:http` +
   `node:fs`), com proteção contra `..` no caminho.
 - WebSocket no mesmo servidor; ao conectar um jogo, envia o último `status` conhecido.
-- Encaminha cada evento da fonte para todos os jogos conectados.
-- Aceita mensagens dos jogos do tipo `{ "tipo": "simular-presente", ... }` apenas para os
-  atalhos de teste do jogo (teclas 1/2); são reenviadas como `presente` normais.
+- Encaminha cada evento da fonte para todos os jogos conectados. O canal é só de ida
+  (ponte → jogo); atalhos de teste são tratados dentro do próprio jogo.
+- `/` redireciona para `/jogos/`, que lista os jogos.
 
 ## Jogo da Urna (`jogos/urna/`)
 
@@ -127,17 +127,18 @@ em paralelo não se misturam; sequência nova do mesmo usuário após o fim reco
   "fundo": "transparente",
   "lados": [
     { "nome": "Lado A", "cor": "#e53935", "imagem": "",
-      "presentes": [ { "id": 5655, "votos": 1 } ] },
+      "presentes": [ { "presente": 5655, "votos": 1 } ] },
     { "nome": "Lado B", "cor": "#f5f5f5", "imagem": "",
-      "presentes": [ { "id": 0, "votos": 1 } ] }
+      "presentes": [ { "presente": "GG", "votos": 1 } ] }
   ]
 }
 ```
 
-Presente pode ser identificado por `id` (preferido) ou `nome`. Votos de um evento =
-`quantidade × votos`. Presentes não mapeados são ignorados. `5655` é o ID conhecido da
-"Rose" (confirmar em `presentes-vistos.json`); `id: 0` significa "ainda não mapeado" e
-deve ser trocado pelo ID real do segundo presente depois de vê-lo numa live.
+`presente` é um número (ID, preferido) ou um texto (nome, sem diferenciar maiúsculas).
+Votos de um evento = `quantidade × votos`. Presentes não mapeados são ignorados. `5655`
+é o ID conhecido da "Rose" (confirmar em `presentes-vistos.json`); o segundo lado vem
+com "GG" só como exemplo e deve receber o ID real do presente escolhido depois de vê-lo
+numa live.
 
 ### Tela (9:16, 1080×1920 lógico, escala para caber)
 
@@ -152,7 +153,7 @@ deve ser trocado pelo ID real do segundo presente depois de vê-lo numa live.
 ### Estado e teclas
 
 - Placar salvo em `localStorage` (recarregar não zera); falha de storage não quebra o jogo.
-- `R` zera o placar. `1` / `2` mandam um voto de teste para o lado A / B (via servidor).
+- `R` zera o placar. `1` / `2` dão um voto de teste para o lado A / B (local, no jogo).
 - WebSocket com reconexão automática a cada 2 s.
 
 ## Erros e limites conhecidos
