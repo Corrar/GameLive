@@ -1,0 +1,48 @@
+/* Base comum dos jogos: palco 9:16, avisos e selo de status. */
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:transparent}
+body{
+  font-family:"Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  color:#fff;-webkit-font-smoothing:antialiased;
+  --destaque:#3df2c2;
+}
+
+/* palco lógico 1080x1920; kit.escalarPalco() ajusta escala e posição */
+.palco{position:absolute;left:0;top:0;width:1080px;height:1920px;transform-origin:0 0;overflow:hidden}
+.palco canvas{position:absolute;inset:0;width:1080px;height:1920px}
+
+/* avisos: o jogo posiciona o contêiner .avisos */
+.avisos{display:flex;flex-direction:column;gap:14px;align-items:flex-start;pointer-events:none}
+.aviso{
+  display:flex;align-items:center;gap:14px;max-width:100%;
+  padding:14px 24px;border-radius:20px;
+  background:rgba(8,10,20,.82);border:2px solid rgba(255,255,255,.14);
+  font-size:34px;font-weight:700;line-height:1.2;
+  box-shadow:0 14px 34px -14px rgba(0,0,0,.8);
+  animation:avisoEntra .35s cubic-bezier(.2,.8,.3,1) both
+}
+.aviso b{color:var(--destaque)}
+.aviso .mais{font-weight:900}
+.aviso.sai{animation:avisoSai .4s ease both}
+@keyframes avisoEntra{from{opacity:0;transform:translateX(-40px) scale(.95)}}
+@keyframes avisoSai{to{opacity:0;transform:translateY(-14px) scale(.96)}}
+
+/* selo de status: fora do palco, discreto, canto superior direito da janela */
+.selo-status{
+  position:fixed;top:8px;right:10px;z-index:99;
+  font:600 12px/1 ui-monospace,Consolas,monospace;letter-spacing:.04em;
+  padding:6px 9px;border-radius:999px;background:rgba(0,0,0,.55);color:#ffb3b3;opacity:.7
+}
+.selo-status.ok{color:#9dffcf}
+
+/* faixa de vencedor reaproveitável pelos jogos com rodada */
+.vencedor{
+  position:absolute;left:60px;right:60px;top:760px;padding:56px 40px;border-radius:40px;text-align:center;
+  background:rgba(8,10,20,.9);border:4px solid var(--destaque);
+  font-size:96px;font-weight:900;line-height:1.05;letter-spacing:-.02em;
+  animation:vencedor .6s cubic-bezier(.2,1.4,.4,1) both
+}
+.vencedor small{display:block;font-size:40px;font-weight:700;opacity:.7;margin-bottom:12px;letter-spacing:.08em;text-transform:uppercase}
+@keyframes vencedor{from{opacity:0;transform:scale(.6)}}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
