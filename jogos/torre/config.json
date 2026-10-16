@@ -1,5 +1,7 @@
 {
   "fundo": "#0b0d17",
+  "titulo": "Torre Alta",
+  "som": true,
   "acoes": {
     "bloco": ["Rose"],
     "gigante": ["Finger Heart"],
@@ -8,5 +10,6 @@
   },
   "blocoGigante": 5,
   "demolicao": 5,
-  "maxFila": 300
+  "maxFila": 300,
+  "comboJanela": 5000
 }
