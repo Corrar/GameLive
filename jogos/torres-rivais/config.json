@@ -1,0 +1,17 @@
+{
+  "titulo": "TORRES RIVAIS",
+  "fundo": "#0b0d17",
+  "times": [
+    { "nome": "Time Menta", "cor": "#3df2c2" },
+    { "nome": "Time Rosa", "cor": "#ff3d7f" }
+  ],
+  "palavras": { "A": ["A", "1"], "B": ["B", "2"] },
+  "meta": 2000,
+  "acoes": {
+    "tijolo": ["Rose"],
+    "parede": ["GG"],
+    "andar": ["Doughnut"],
+    "arranhaceu": ["Galaxy"]
+  },
+  "blocos": { "tijolo": 5, "parede": 30, "andar": 100, "arranhaceu": 1000 }
+}
