@@ -14,11 +14,11 @@
     text-shadow:0 4px 0 #0b0d17}
   .barra{position:relative;height:64px;margin-top:10px;border-radius:20px;overflow:hidden;background:#1b2036;
     border:5px solid #eef1fa;box-shadow:0 8px 0 #0b0d17}
-  .vida,.rastro{position:absolute;top:0;bottom:0;left:0;width:100%}
-  .l1 .vida,.l1 .rastro{left:auto;right:0}
-  .rastro{background:#ffc23d;transition:width .6s .35s ease}
+  .vida,.rastro{position:absolute;inset:0;transform-origin:left center}
+  .l1 .vida,.l1 .rastro{transform-origin:right center}
+  .rastro{background:#ffc23d;transition:transform .6s .35s ease}
   .vida{background:linear-gradient(180deg,color-mix(in srgb,var(--cor) 70%,#fff),var(--cor) 55%,color-mix(in srgb,var(--cor) 70%,#000));
-    transition:width .12s ease-out}
+    transition:transform .12s ease-out}
   .barra.perigo .vida{animation:perigo .5s steps(2) infinite}
   @keyframes perigo{50%{filter:brightness(1.6)}}
   .info{display:flex;justify-content:space-between;margin-top:14px;font-size:34px;font-weight:800;font-variant-numeric:tabular-nums;color:#eef1fa}

@@ -53,8 +53,8 @@ function atualizarHud() {
   const tam = times.tamanho();
   lut.forEach((f, i) => {
     const pct = (f.vida / VIDA) * 100;
-    $('vida' + i).style.width = pct + '%';
-    $('rastro' + i).style.width = pct + '%';
+    $('vida' + i).style.transform = `scaleX(${pct / 100})`;
+    $('rastro' + i).style.transform = `scaleX(${pct / 100})`;
     $('barra' + i).classList.toggle('perigo', pct > 0 && pct < 25);
     $('hp' + i).textContent = `${Math.ceil(f.vida)} / ${VIDA}`;
     $('torcida' + i).textContent = `👥 ${tam[i ? 'B' : 'A']}`;
