@@ -40,9 +40,10 @@ O **GameLive** é um conjunto de jogos feitos para rodar *durante* uma live. O s
 | Parte | Onde | O que faz |
 |---|---|---|
 | **Ponte** | `ponte/` | Conecta na live pelo `@`, converte comentários e presentes num formato único, conta presentes em sequência sem duplicar e reconecta sozinha se a live cair. |
-| **Simulador** | `ponte/simulador.js` | Gera comentários e presentes falsos para testar e gravar demonstrações sem estar ao vivo. |
+| **Simulador** | `jogos/kit/simulador.js` | Gera comentários e presentes falsos — na ponte (`--simular`) e no modo demonstração do navegador. |
 | **Kit** | `jogos/kit/` | Base comum dos jogos: conexão com a ponte, palco 9:16, avisos, placar salvo, times. |
 | **Jogos** | `jogos/<nome>/` | Cada jogo é uma página estática com um `config.json` editável. |
+| **Site** | `site/` | Página inicial publicada na Vercel, com a vitrine dos jogos em demonstração. |
 
 ## Jogos
 
@@ -56,6 +57,14 @@ O **GameLive** é um conjunto de jogos feitos para rodar *durante* uma live. O s
 | 🐦 **Voo da Live** | O pássaro voa sozinho e o chat tenta derrubar | ✅ pronto |
 | 🪁 **Céu de Pipas** | Cada comentário é uma pipa; presente corta a linha do rival | ✅ pronto |
 | 🥊 **Briga da Live** | Escolha o lutador; presentes viram golpes | ✅ pronto |
+
+## Demonstração online
+
+O site do GameLive (pasta `site/`) é publicado na Vercel com os 8 jogos rodando em **modo demonstração**: fora de `localhost` não existe ponte, então o kit liga o simulador dentro do próprio navegador e o selo mostra `● demonstração`. Localmente, `?demo` no fim da URL força o mesmo modo. O placar da demonstração fica separado do placar das lives.
+
+```bash
+node scripts/site.mjs     # monta dist/ (site + jogos + assets), o mesmo que a Vercel roda
+```
 
 ## Começando
 

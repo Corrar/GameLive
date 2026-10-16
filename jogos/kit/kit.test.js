@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ehPresente, acaoDoPresente, escapar, palavraDoTime, criarTimes, html } from './kit.js';
+import { ehPresente, acaoDoPresente, escapar, palavraDoTime, criarTimes, html, ehDemo } from './kit.js';
 
 const ev = { presenteId: 5655, presenteNome: 'Rose' };
 
@@ -44,4 +44,11 @@ test('html`` escapa só o que é interpolado', () => {
   const nick = '<img src=x onerror=alert(1)>';
   assert.equal(html`<b>${nick}</b> mandou ${3}`.__html,
     '<b>&lt;img src=x onerror=alert(1)&gt;</b> mandou 3');
+});
+
+test('ehDemo: fora de localhost ou com ?demo roda em demonstração', () => {
+  assert.equal(ehDemo('http://localhost:3000/jogos/urna/'), false);
+  assert.equal(ehDemo('http://127.0.0.1:3000/jogos/urna/'), false);
+  assert.equal(ehDemo('http://localhost:3000/jogos/urna/?demo'), true);
+  assert.equal(ehDemo('https://gamelive.vercel.app/jogos/urna/'), true);
 });
