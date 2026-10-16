@@ -34,6 +34,7 @@ if ((!args.simular && !args.usuario) || !Number.isInteger(args.porta)) {
 async function servirArquivo(req, res) {
   const url = new URL(req.url, 'http://local');
   if (url.pathname === '/') { res.writeHead(302, { Location: '/jogos/' }); return res.end(); }
+  if (url.pathname === '/favicon.ico') { res.writeHead(204); return res.end(); }
   if (!url.pathname.startsWith('/jogos/')) { res.writeHead(404); return res.end('não existe'); }
 
   let rel = decodeURIComponent(url.pathname.slice('/jogos/'.length));

@@ -1,0 +1,18 @@
+{
+  "titulo": "VOTAÇÃO DA LIVE",
+  "fundo": "transparente",
+  "lados": [
+    {
+      "nome": "Lado A",
+      "cor": "#e53935",
+      "imagem": "",
+      "presentes": [{ "presente": 5655, "votos": 1 }]
+    },
+    {
+      "nome": "Lado B",
+      "cor": "#f1f1f1",
+      "imagem": "",
+      "presentes": [{ "presente": "GG", "votos": 1 }]
+    }
+  ]
+}

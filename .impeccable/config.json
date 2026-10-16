@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "clipped-overflow-container",
+        "value": "*",
+        "files": [
+          "jogos/urna/index.html"
+        ],
+        "createdAt": "2026-10-16T17:53:15.335Z",
+        "reason": "Claude: .palco é o quadro 9:16 capturado no OBS; cortar o que sai dele é intencional"
+      }
+    ]
+  }
+}
