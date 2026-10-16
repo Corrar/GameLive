@@ -1,5 +1,7 @@
 {
   "fundo": "#0b0d17",
+  "som": true,
+  "cenario": true,
   "meta": 1000000,
   "acoes": {
     "cano": ["Rose"],
@@ -11,5 +13,7 @@
   "turvaSegundos": 6,
   "caosSegundos": 8,
   "caosFator": 0.55,
-  "rosquinhaRaio": 180
+  "rosquinhaRaio": 180,
+  "marcoDistancia": 100000,
+  "pontosPorQueda": 5
 }
