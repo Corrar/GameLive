@@ -1,0 +1,15 @@
+{
+  "fundo": "#0b0d17",
+  "meta": 1000000,
+  "acoes": {
+    "cano": ["Rose"],
+    "turva": ["Sunglasses"],
+    "rosquinha": ["Doughnut"],
+    "caos": ["Galaxy"]
+  },
+  "distanciaPorSegundo": 700,
+  "turvaSegundos": 6,
+  "caosSegundos": 8,
+  "caosFator": 0.55,
+  "rosquinhaRaio": 180
+}
