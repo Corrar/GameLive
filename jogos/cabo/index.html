@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cabo de Guerra</title>
+<link rel="stylesheet" href="../kit/kit.css">
+<style>
+  .t0{--cor:var(--cor0)}.t1{--cor:var(--cor1)}
+  .topo{position:absolute;left:40px;right:40px;top:40px;padding:26px 34px 24px;border-radius:36px;
+    background:rgba(8,10,20,.86);border:3px solid rgba(255,255,255,.12);box-shadow:0 30px 60px -30px rgba(0,0,0,.9)}
+  .titulo{text-align:center;font-size:32px;font-weight:800;letter-spacing:.22em;color:#ffc23d;margin-bottom:14px}
+  .times{display:flex;align-items:center;justify-content:space-between;gap:16px}
+  .time{flex:1;min-width:0}
+  .time.t1{text-align:right}
+  .nome{font-size:60px;font-weight:900;line-height:1.05;color:var(--cor);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .info{font-size:34px;font-weight:800;color:rgba(255,255,255,.85);font-variant-numeric:tabular-nums;margin-top:6px}
+  .vs{font-size:44px;font-weight:900;color:rgba(255,255,255,.45)}
+  .dica{margin-top:16px;padding-top:14px;border-top:2px solid rgba(255,255,255,.1);text-align:center;font-size:34px;font-weight:800}
+  .dica b{color:var(--cor);font-size:40px}
+  .avisos{position:absolute;left:40px;right:40px;top:1290px}
+  .aviso .mais{color:var(--cor)}
+  .legenda{position:absolute;left:40px;right:40px;bottom:40px;display:flex;flex-wrap:wrap;justify-content:center;gap:12px 14px}
+  .legenda span{padding:10px 20px;border-radius:999px;background:rgba(8,10,20,.82);border:2px solid rgba(255,255,255,.14);
+    font-size:32px;font-weight:800;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="palco">
+  <canvas id="cena" width="1080" height="1920"></canvas>
+  <header class="topo">
+    <div class="titulo" id="titulo"></div>
+    <div class="times">
+      <div class="time t0"><div class="nome" id="nome0"></div><div class="info" id="info0"></div></div>
+      <div class="vs">VS</div>
+      <div class="time t1"><div class="nome" id="nome1"></div><div class="info" id="info1"></div></div>
+    </div>
+    <div class="dica" id="dica"></div>
+  </header>
+  <div class="avisos" id="avisos"></div>
+  <div class="legenda" id="legenda"></div>
+</div>
+<script type="module" src="game.js"></script>
+</body>
+</html>

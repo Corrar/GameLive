@@ -1,0 +1,19 @@
+{
+  "titulo": "CABO DE GUERRA",
+  "fundo": "#0b0d17",
+  "times": [
+    { "nome": "Meninos", "cor": "#3df2c2" },
+    { "nome": "Meninas", "cor": "#ff3d7f" }
+  ],
+  "palavras": { "A": ["A", "1"], "B": ["B", "2"] },
+  "limite": 100,
+  "acoes": {
+    "puxinho": ["Rose"],
+    "puxao": ["GG"],
+    "dobro": ["Doughnut"],
+    "superpuxao": ["Galaxy"]
+  },
+  "forca": { "comentario": 1, "puxinho": 3, "puxao": 10, "superpuxao": 60 },
+  "dobroSegundos": 10,
+  "dobroMaximoSegundos": 60
+}
