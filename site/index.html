@@ -123,9 +123,9 @@
     </div>
 
     <div class="vitrine">
-      <div class="celular"><iframe id="tela" title="Demonstração do jogo" src="jogos/corrida/?demo" loading="lazy"></iframe></div>
+      <div class="celular"><iframe id="tela" title="Demonstração do jogo" src="jogos/urna/?demo" loading="lazy"></iframe></div>
       <div class="chips" id="chips" role="group" aria-label="Escolher jogo da demonstração"></div>
-      <p class="legenda">Eventos simulados no navegador. <a id="cheia" href="jogos/corrida/?demo">Abrir em tela cheia</a></p>
+      <p class="legenda">Eventos simulados no navegador. <a id="cheia" href="jogos/urna/?demo">Abrir em tela cheia</a></p>
     </div>
   </div>
 
@@ -193,8 +193,8 @@ npm start -- @seu_usuario</pre>
 
 <script>
   const JOGOS = [
+    ['urna', '🗳️', 'Urna da Live', 'Presente vira voto: placar gigante, combos, urna eletrônica e ranking de quem mais mandou.'],
     ['corrida', '🏎️', 'Corrida do Chat', 'Quem comenta entra na pista; presentes viram nitro e óleo.'],
-    ['urna', '🗳️', 'Urna da Live', 'Cada presente vira voto para um dos dois lados da barra.'],
     ['cabo', '🪢', 'Cabo de Guerra', 'Comente o seu time e puxe a corda; presente puxa mais forte.'],
     ['torre', '🗼', 'Torre Alta', 'Presentes constroem e derrubam a torre.'],
     ['torres-rivais', '🏰', 'Torres Rivais', 'Dois times, duas torres, quem chega primeiro na meta.'],
@@ -220,7 +220,7 @@ npm start -- @seu_usuario</pre>
     chip.type = 'button';
     chip.dataset.pasta = pasta;
     chip.textContent = `${emoji} ${nome}`;
-    chip.setAttribute('aria-pressed', String(pasta === 'corrida'));
+    chip.setAttribute('aria-pressed', String(pasta === 'urna'));
     chip.addEventListener('click', () => mostrar(pasta));
     chips.appendChild(chip);
 

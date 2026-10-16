@@ -49,7 +49,7 @@ O **GameLive** é um conjunto de jogos feitos para rodar *durante* uma live. O s
 
 | Jogo | Como o chat joga | Status |
 |---|---|---|
-| 🗳️ **Urna da Live** | Cada presente vira voto para um dos dois lados da barra | ✅ pronto |
+| 🗳️ **Urna da Live** | Presente vira voto; combos, urna eletrônica, ranking e rodadas com tempo | ✅ pronto |
 | 🪢 **Cabo de Guerra** | Comente o seu time e puxe a corda; presente puxa mais forte | ✅ pronto |
 | 🏎️ **Corrida do Chat** | Quem comenta entra na pista; presentes viram nitro e óleo | ✅ pronto |
 | 🗼 **Torre Alta** | Presentes constroem e derrubam a torre | ✅ pronto |
@@ -95,6 +95,15 @@ Cada jogo tem um `config.json` com nomes, cores e quais presentes fazem o quê. 
 { "presente": 5655, "votos": 1 }
 { "presente": "Rose", "votos": 1 }
 ```
+
+Campos comuns aos jogos:
+
+| Campo | O que faz |
+|---|---|
+| `"som": true` | Efeitos sonoros (no OBS, marque *Controlar áudio via OBS* na fonte de navegador). |
+| `"fundo"` | Cor, gradiente ou `"transparente"` para sobrepor na câmera; a Urna também aceita `"estudio"` (cenário próprio). |
+| `"rodada": { "segundos": 120, "pausa": 8 }` | Urna: duração da rodada e tempo mostrando o vencedor (`0` = sem cronômetro). |
+| `"numero"`, `"imagem"` em cada lado | Urna: número digitado na urna eletrônica e foto do lado. |
 
 Para descobrir o ID dos presentes da sua região, conecte numa live e abra o arquivo `presentes-vistos.json`, que a ponte preenche com todo presente que chegar.
 
