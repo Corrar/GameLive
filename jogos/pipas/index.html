@@ -6,33 +6,72 @@
 <title>Céu de Pipas</title>
 <link rel="stylesheet" href="../kit/kit.css">
 <style>
-  .topo{position:absolute;left:40px;top:30px;width:520px}
-  h1{margin:0;font-size:76px;font-weight:900;letter-spacing:-.02em;line-height:.95}
-  h1 span{color:#3df2c2}
-  .sub{margin:10px 0 14px;font-size:30px;font-weight:800;color:#ffc23d}
-  .legenda{display:flex;flex-direction:column;align-items:flex-start;gap:8px}
-  .legenda span{padding:5px 14px;border-radius:999px;background:rgba(8,10,20,.6);border:2px solid rgba(255,255,255,.16);font-size:28px;font-weight:800}
-  .placar{position:absolute;right:40px;top:30px;width:440px;padding:18px 24px;border-radius:30px;
-    background:rgba(8,10,20,.78);border:2px solid rgba(255,61,127,.5);box-shadow:0 20px 40px -24px rgba(0,0,0,.9)}
-  .placar h2{margin:0 0 8px;font-size:26px;font-weight:900;letter-spacing:.14em;color:#ff7aa6}
-  .placar ol{list-style:none;margin:0;padding:0}
-  .placar li{display:flex;align-items:center;gap:10px;font-size:32px;font-weight:800;line-height:50px;white-space:nowrap}
-  .placar li b{flex:none;width:48px;color:#ffc23d}
-  .placar li span{flex:1;overflow:hidden;text-overflow:ellipsis}
-  .placar li em{flex:none;font-style:normal;font-weight:900;color:#3df2c2}
-  .placar .vazio{font-size:28px;line-height:1.3;white-space:normal;opacity:.85}
-  .avisos{position:absolute;left:40px;right:40px;top:1470px}
+  /* topo: título, contadores e presentes */
+  .topo{position:absolute;left:0;right:0;top:24px;z-index:5;text-align:center;pointer-events:none}
+  .topo h1{margin:0;font-size:100px;line-height:1;color:#fff}
+  .topo h1 span{color:var(--ouro)}
+  .sub{margin-top:10px;font-size:38px;color:#fff}
+  .contadores{display:flex;justify-content:center;gap:22px;margin-top:16px}
+  .contadores .pilula{font-size:52px;padding:6px 30px 8px}
+  .contadores .pilula small{font-size:30px;color:#ffe9a8;-webkit-text-stroke:.12em var(--contorno)}
+  .legenda{position:absolute;left:24px;right:24px;top:318px;z-index:5;display:flex;justify-content:space-around;pointer-events:none}
+  .legenda .chip-presente .emoji{font-size:70px}
+  .legenda .chip-presente .efeito{font-size:34px}
+
+  /* ranking "mais cortaram" */
+  .ranking-box{position:absolute;z-index:5;left:28px;width:610px;bottom:28px}
+  .ranking-box h3{margin:0 0 10px 8px;font-size:44px;color:#fff}
+  .ranking-box .ranking{gap:8px}
+  .ranking-box .ranking-item{font-size:30px;padding:3px 20px 3px 8px;min-height:62px}
+  .ranking-box .avatar.pequeno{--tam:52px}
+  .ranking-box .ranking-pts{font-size:38px}
+  .ranking-box .ranking-pts::after{content:" ✂️";font-size:26px;-webkit-text-stroke:0}
+  .ranking-box .ranking-item.novo{animation:popCartao .35s cubic-bezier(.2,1.6,.4,1)}
+  .ranking-item.vazio{justify-content:center;font-size:28px;color:#ffe9a8;padding:12px 20px}
+
+  /* destaque: avatar grande de quem mandou o último presente */
+  .destaque{position:absolute;z-index:5;right:28px;width:400px;bottom:142px;height:380px;padding:14px 14px 10px;
+    border-radius:40px;text-align:center;display:flex;flex-direction:column;align-items:center;
+    background:radial-gradient(120% 90% at 50% 0%,rgba(70,40,120,.94),rgba(16,10,34,.94));
+    border:6px solid var(--cor,#fff);box-shadow:0 8px 0 rgba(0,0,0,.35),0 0 46px color-mix(in srgb,var(--cor,#fff) 70%,transparent)}
+  .destaque.pop{animation:popCartao .35s cubic-bezier(.2,1.6,.4,1)}
+  @keyframes popCartao{40%{transform:scale(1.05)}}
+  .destaque .rotulo{font-size:28px;color:#ffe9a8;letter-spacing:.06em}
+  .destaque .avatar{margin-top:8px;--tam:118px;border-color:var(--cor,#fff);box-shadow:0 0 0 5px rgba(0,0,0,.3),0 0 30px var(--cor,#fff)}
+  .destaque .vazio-emoji{margin-top:8px;font-size:100px;line-height:118px}
+  .destaque .quem{margin-top:8px;max-width:100%;font-size:42px;line-height:1.15;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px}
+  .destaque .acao{margin-top:2px;font-size:36px;line-height:1.2;color:var(--cor,#fff);white-space:nowrap}
+  .destaque .combo{margin-top:6px;height:46px;font-size:42px;color:var(--ouro);opacity:0}
+  .destaque .combo.on{opacity:1}
+
+  .avisos{position:absolute;z-index:5;right:28px;width:400px;bottom:28px;flex-direction:column-reverse;align-items:stretch}
+  .avisos .aviso{font-size:24px;padding:7px 18px;border-radius:24px;line-height:1.15}
+  .avisos .aviso b{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom}
 </style>
 </head>
 <body>
 <div class="palco">
   <canvas id="tela" width="1080" height="1920"></canvas>
   <header class="topo">
-    <h1>CÉU DE <span>PIPAS</span></h1>
-    <div class="sub">💬 comente para soltar a sua pipa</div>
-    <div class="legenda" id="legenda"></div>
+    <h1 class="titulo-jogo">CÉU DE <span>PIPAS</span></h1>
+    <div class="sub txt-jogo">💬 COMENTE PARA SOLTAR A SUA PIPA</div>
+    <div class="contadores">
+      <div class="pilula">🪁 <span id="noCeu">0</span> <small>NO CÉU</small></div>
+      <div class="pilula">✂️ <span id="cortes">0</span> <small>CORTADAS</small></div>
+    </div>
   </header>
-  <section class="placar"><h2>✂️ QUEM MAIS CORTOU</h2><ol id="placar"></ol></section>
+  <div class="legenda" id="legenda"></div>
+  <section class="ranking-box">
+    <h3 class="txt-jogo">✂️ MAIS CORTARAM</h3>
+    <ol class="ranking" id="ranking"></ol>
+  </section>
+  <section class="destaque" id="destaque">
+    <div class="rotulo txt-jogo">ÚLTIMO PRESENTE</div>
+    <div id="destaqueAvatar"><div class="vazio-emoji">🎁</div></div>
+    <div class="quem txt-jogo" id="destaqueQuem">MANDE UM!</div>
+    <div class="acao txt-jogo" id="destaqueAcao">CORTE UMA PIPA</div>
+    <div class="combo txt-jogo" id="destaqueCombo">COMBO x2</div>
+  </section>
   <div class="avisos" id="avisos"></div>
 </div>
 <script type="module" src="game.js"></script>

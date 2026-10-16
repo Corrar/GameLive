@@ -1,7 +1,9 @@
 {
-  "fundo": "linear-gradient(180deg,#0b0d17 0%,#121a3d 45%,#2b1d4f 78%,#5a2350 100%)",
+  "fundo": "ceu",
+  "som": true,
   "maxPipas": 30,
   "escudoMax": 5,
+  "janelaCombo": 6000,
   "acoes": {
     "crescer": ["Rose"],
     "cortar": ["GG"],
