@@ -1,7 +1,9 @@
-import { conectar, carregarConfig, aplicarFundo, escalarPalco, ehPresente, avisos, html,
+import { conectar, carregarConfig, escalarPalco, ehPresente, avisos, html,
   guardar, lembrar, teclas, eventoFalso } from '../kit/kit.js';
 import { criarCombo, criarRanking, emojiDoPresente, formatarTempo, avatar, animar, contador,
   particulas, flutuar, tremer, confete, cronometro, pintarRanking, ligarSom, tocar } from '../kit/efeitos.js';
+import { fontesProntas } from '../kit/cena3d.js';
+import { criarUrna3d } from './urna3d.js';
 
 const cfg = await carregarConfig();
 const lados = cfg.lados;
@@ -10,10 +12,14 @@ const palco = document.querySelector('.palco');
 // centro de cada lado no palco, para efeitos (número grande e barra)
 const CENTRO = [{ x: 285, y: 400 }, { x: 795, y: 400 }];
 
-const estudio = cfg.fundo === 'estudio';
-aplicarFundo(estudio ? '#7a3a12' : cfg.fundo);
-if (!estudio) palco.classList.add('transparente');
+// "transparente": só a urna e a mão, para sobrepor na câmera; qualquer outro valor mostra a sala 3D
+if (cfg.fundo === 'transparente') {
+  palco.classList.add('transparente');
+  document.body.style.background = 'transparent';
+}
 escalarPalco(palco);
+await fontesProntas();
+const urna = criarUrna3d(palco, cfg);
 ligarSom(cfg.som);
 palco.style.setProperty('--cor-a', lados[0].cor);
 palco.style.setProperty('--cor-b', lados[1].cor);
@@ -87,12 +93,15 @@ function mostrarCombo(i, n, ganho) {
 }
 
 function mostrarUltimo(ev, i) {
-  const u = $('ultimo' + i);
+  const u = $('ultimo');
   u.style.setProperty('--cor', lados[i].cor);
   const nome = document.createElement('span');
   nome.className = 'quem txt-jogo';
   nome.textContent = ev.nome || ev.user;
-  u.replaceChildren(avatar(ev), nome);
+  const votou = document.createElement('span');
+  votou.className = 'votou txt-jogo';
+  votou.textContent = `votou ${lados[i].numero ?? ''} · ${lados[i].nome}`;
+  u.replaceChildren(avatar(ev), nome, votou);
   animar(u);
 }
 
@@ -107,106 +116,6 @@ function mostrarVirada(i) {
   tocar('virada');
   setTimeout(() => v.remove(), 2700);
 }
-
-/* ---------- urnas eletrônicas: a mão de cada lado digita o número e confirma ---------- */
-const dormir = (ms) => new Promise(r => setTimeout(r, ms));
-const TECLAS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'];
-
-function criarUrna(i) {
-  const raiz = $('urna' + i);
-  raiz.appendChild($('modelo-urna').content.cloneNode(true));
-  raiz.style.setProperty('--cor', lados[i].cor);
-  const q = (sel) => raiz.querySelector(sel);
-  q('.marca').textContent = cfg.marca ?? '';
-  for (const t of TECLAS) {
-    const k = document.createElement('span');
-    k.className = 'tecla' + (t === '0' ? ' zero' : '');
-    k.dataset.tecla = t;
-    k.textContent = t;
-    q('.teclas').appendChild(k);
-  }
-  const numero = String(lados[i].numero ?? i + 1);
-  const mao = q('.mao');
-  // braço sai pelo canto de fora: esquerda embaixo no lado A, direita embaixo no lado B (espelhado)
-  const pose = i === 0 ? 'rotate(32deg) scale(.78)' : 'rotate(-32deg) scale(-.78, .78)';
-  const centro = (el) => {
-    let x = el.offsetWidth / 2, y = el.offsetHeight / 2;
-    for (let n = el; n && n !== raiz; n = n.offsetParent) { x += n.offsetLeft; y += n.offsetTop; }
-    return { x, y };
-  };
-  const mirar = (el, apertando) => {
-    const { x, y } = centro(el);
-    mao.style.transform = `translate(${x - 100}px, ${y - 10 - (apertando ? 0 : 26)}px) ${pose}`;
-    return { x, y };
-  };
-
-  function tela(digitados) {
-    q('.digitos').replaceChildren(...[...numero].map((_, k) => {
-      const d = document.createElement('span');
-      d.className = 'digito' + (k === digitados ? ' cursor' : '');
-      d.textContent = k < digitados ? numero[k] : '';
-      return d;
-    }));
-    const completo = digitados >= numero.length;
-    const c = q('.candidato');
-    c.style.setProperty('--cor', lados[i].cor);
-    c.classList.toggle('on', completo);
-    if (completo && lados[i].imagem) {
-      const img = new Image();
-      img.alt = '';
-      img.src = lados[i].imagem;
-      c.replaceChildren(img);
-    } else {
-      c.textContent = lados[i].nome.trim().split(/\s+/).map(p => p[0]).join('').slice(0, 2).toUpperCase();
-    }
-    q('.nome-cand').textContent = completo ? lados[i].nome : '';
-  }
-
-  async function apertar(alvo) {
-    mirar(alvo, false);
-    await dormir(150);
-    const { x, y } = mirar(alvo, true);
-    await dormir(90);
-    alvo.classList.add('apertada');
-    const c = document.createElement('span');
-    c.className = 'clique';
-    c.style.cssText = `left:${x}px;top:${y}px`;
-    c.addEventListener('animationend', () => c.remove(), { once: true });
-    raiz.appendChild(c);
-    tocar('tecla');
-    await dormir(100);
-    alvo.classList.remove('apertada');
-  }
-
-  let pendentes = 0, digitando = false;
-  async function digitar() {
-    if (digitando) return;
-    digitando = true;
-    while (pendentes > 0) {
-      pendentes--;
-      tela(0);
-      for (let k = 0; k < numero.length; k++) {
-        await apertar(q(`.tecla[data-tecla="${numero[k]}"]`));
-        tela(k + 1);
-      }
-      await dormir(160);
-      await apertar(q('.botao.confirma'));
-      animar(q('.fim'), 'on');
-      await dormir(pendentes ? 300 : 800);
-    }
-    mirar(q('.tecla[data-tecla="5"]'), false);
-    digitando = false;
-  }
-
-  tela(0);
-  mirar(q('.tecla[data-tecla="5"]'), false);
-  return {
-    // cada presente vira uma digitação; no máximo 2 esperando para não atrasar demais
-    votar() { pendentes = Math.min(pendentes + 1, 2); digitar(); }
-  };
-}
-
-const urnas = [criarUrna(0), criarUrna(1)];
 
 /* ---------- rodada ---------- */
 const rodada = cfg.rodada ?? {};
@@ -239,6 +148,7 @@ function encerrarRodada() {
     t.textContent = 'Vencedor da rodada';
     faixa.append(t, lados[venc].nome);
     confete(palco, { cores: [lados[venc].cor, '#ffd23f', '#fff'] });
+    urna.comemorar(lados[venc].cor);
   }
   palco.appendChild(faixa);
   tocar('vitoria');
@@ -272,7 +182,7 @@ function aoEvento(ev) {
 
     flutuar(palco, { x: CENTRO[i].x, y: CENTRO[i].y - 150, texto: `+${n}`, cor: lado.cor, tamanho: 110 });
     particulas(palco, { x: CENTRO[i].x, y: 780, qtd: Math.min(8 + n * 2, 30), emoji: null, cores: [lado.cor, '#fff', '#ffd23f'] });
-    particulas(palco, { x: i ? 900 : 180, y: 900, qtd: Math.min(n, 6), emoji: regra.emoji ?? emojiDoPresente(ev.presenteNome), forca: .8 });
+    particulas(palco, { x: i ? 900 : 180, y: 870, qtd: Math.min(n, 6), emoji: regra.emoji ?? emojiDoPresente(ev.presenteNome), forca: .8 });
     tocar('ponto');
     mostrarCombo(i, combo.registrar(i, n), n);
     mostrarUltimo(ev, i);
@@ -281,7 +191,7 @@ function aoEvento(ev) {
     pintarRanking($('ranking'), ranking.top(5), { destaque: ev.user });
     avisar(html`<span class="l${i}"><b>${ev.nome || ev.user}</b> ${ev.quantidade}× ${ev.presenteNome} <span class="mais">+${n}</span></span>`);
 
-    urnas[i].votar();
+    urna.votar(i);
 
     const depois = lider();
     if (antes !== -1 && depois !== -1 && antes !== depois) mostrarVirada(depois);

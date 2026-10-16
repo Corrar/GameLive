@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Vitrine 3D do kit</title>
+<link rel="stylesheet" href="kit.css">
+<script type="importmap">{ "imports": { "three": "./vendor/three.module.min.js", "three/addons/": "./vendor/addons/" } }</script>
+</head>
+<body>
+<!-- página de conferência das peças 3D do kit (não aparece na lista de jogos) -->
+<div class="palco"><div class="pilula" style="position:absolute;left:40px;top:40px">VITRINE 3D</div></div>
+<script type="module">
+  import { escalarPalco } from './kit.js';
+  import { criarCena, ceuFisico, chao, nuvens, boneco, poses, torcida, rotulo, rotuloAvatar, criarParticulas,
+    material, caixa, malha, holofote, fontesProntas, THREE } from './cena3d.js';
+  const palco = document.querySelector('.palco');
+  escalarPalco(palco);
+  await fontesProntas();
+  const c = criarCena(palco, { luz: 'dia', camera: { pos: [0, 5, 16], alvo: [0, 2.2, 0], fov: 40 }, sol: { alcance: 14 } });
+  ceuFisico(c, { elevacao: 22 });
+  chao(c, { tipo: 'grama' });
+  nuvens(c);
+  const pista = chao(c, { tipo: 'pista', largura: 40, profundidade: 4, repetir: [10, 1], y: .01 });
+  pista.position.z = 2;
+  const corredor = boneco({ camisa: '#ff3358', faixa: '#ffffff', numero: 7 });
+  corredor.position.set(-2, 0, 2);
+  c.cena.add(corredor);
+  const lutador = boneco({ camisa: '#2ad08f', pele: '#8a5638', cabelo: '#111', faixa: '#ffd23f', semente: 4 });
+  lutador.position.set(2, 0, 2);
+  lutador.rotation.y = -.5;
+  c.cena.add(lutador);
+  const t1 = torcida(c, { fileiras: 7, porFileira: 34, origem: [-17, .4, -6] });
+  const bloco = malha(caixa(1.4, .6, 1.4, .12), material('#ff3d7f', { verniz: 1, rugosidade: .3 }));
+  bloco.position.set(0, .3, 4.5);
+  c.cena.add(bloco);
+  const r = rotulo('COMBO x12', { cor: '#ffd23f', altura: .9 });
+  r.position.set(0, 4.6, 2);
+  c.cena.add(r);
+  const av = rotuloAvatar({ user: 'luna.gg', nome: 'luna.gg' }, { cor: '#3df2c2', altura: 1.3 });
+  av.position.set(-2, 3, 2);
+  c.cena.add(av);
+  holofote(c, { pos: [-10, 14, 2], alvo: [0, 0, 2] });
+  const part = criarParticulas(c);
+  c.aoQuadro((dt, t) => {
+    poses.correr(corredor, t * 9);
+    poses.guarda(lutador, t);
+    t1.animar(t, .6);
+  });
+  setInterval(() => part.explodir([0, 1, 4.5], { qtd: 50 }), 1200);
+  setTimeout(() => part.confete({}), 300);
+</script>
+</body>
+</html>

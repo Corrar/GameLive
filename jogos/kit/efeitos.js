@@ -204,14 +204,18 @@ function audio() {
   return ctx.state === 'running' ? ctx : null;
 }
 
-function nota(a, { freq, ate = freq, dur = .12, tipo = 'square', vol = .06, atraso = 0 }) {
+// sustenta: volume constante até o fim (bipe eletrônico); senão decai como uma batida.
+function nota(a, { freq, ate = freq, dur = .12, tipo = 'square', vol = .06, atraso = 0, sustenta = false }) {
   const t = a.currentTime + atraso;
   const o = a.createOscillator(), g = a.createGain();
   o.type = tipo;
   o.frequency.setValueAtTime(freq, t);
   o.frequency.exponentialRampToValueAtTime(ate, t + dur);
   g.gain.setValueAtTime(vol, t);
-  g.gain.exponentialRampToValueAtTime(.0001, t + dur);
+  if (sustenta) {
+    g.gain.setValueAtTime(vol, t + dur - .008);
+    g.gain.linearRampToValueAtTime(0, t + dur);
+  } else g.gain.exponentialRampToValueAtTime(.0001, t + dur);
   o.connect(g).connect(a.destination);
   o.start(t);
   o.stop(t + dur + .02);
@@ -224,6 +228,12 @@ const SONS = {
   virada: (a) => [660, 880, 1100].forEach((f, i) => nota(a, { freq: f, dur: .12, tipo: 'triangle', vol: .08, atraso: i * .08 })),
   vitoria: (a) => [523, 659, 784, 1047, 784, 1047].forEach((f, i) => nota(a, { freq: f, dur: .18, tipo: 'triangle', vol: .09, atraso: i * .12 })),
   tecla: (a) => nota(a, { freq: 1200, ate: 900, dur: .05, tipo: 'square', vol: .04 }),
+  // urna eletrônica: bipe curto a cada tecla e o trinado de confirmação do voto
+  urnaTecla: (a) => nota(a, { freq: 1046, dur: .09, tipo: 'square', vol: .04, sustenta: true }),
+  urnaConfirma: (a) => {
+    for (let i = 0; i < 9; i++) nota(a, { freq: i % 2 ? 1318 : 1568, dur: .06, tipo: 'square', vol: .04, atraso: i * .06, sustenta: true });
+    nota(a, { freq: 1568, dur: .34, tipo: 'square', vol: .04, atraso: .54, sustenta: true });
+  },
   tique: (a) => nota(a, { freq: 1500, dur: .04, tipo: 'sine', vol: .05 })
 };
 
