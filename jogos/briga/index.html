@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Briga da Live</title>
+<link rel="stylesheet" href="../kit/kit.css">
+<style>
+  .l0{--cor:var(--cor-a)}.l1{--cor:var(--cor-b)}
+  .hud{position:absolute;left:30px;right:30px;top:36px;display:grid;grid-template-columns:1fr 200px 1fr;gap:18px;align-items:start}
+  .lado{min-width:0}
+  .lado.l1{text-align:right}
+  .nome{font-size:48px;font-weight:900;line-height:1.1;color:var(--cor);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    text-shadow:0 4px 0 #0b0d17}
+  .barra{position:relative;height:64px;margin-top:10px;border-radius:20px;overflow:hidden;background:#1b2036;
+    border:5px solid #eef1fa;box-shadow:0 8px 0 #0b0d17}
+  .vida,.rastro{position:absolute;top:0;bottom:0;left:0;width:100%}
+  .l1 .vida,.l1 .rastro{left:auto;right:0}
+  .rastro{background:#ffc23d;transition:width .6s .35s ease}
+  .vida{background:linear-gradient(180deg,color-mix(in srgb,var(--cor) 70%,#fff),var(--cor) 55%,color-mix(in srgb,var(--cor) 70%,#000));
+    transition:width .12s ease-out}
+  .barra.perigo .vida{animation:perigo .5s steps(2) infinite}
+  @keyframes perigo{50%{filter:brightness(1.6)}}
+  .info{display:flex;justify-content:space-between;margin-top:14px;font-size:34px;font-weight:800;font-variant-numeric:tabular-nums;color:#eef1fa}
+  .l1 .info{flex-direction:row-reverse}
+  .centro{text-align:center;padding:12px 0 14px;border-radius:28px;background:rgba(8,10,20,.88);border:4px solid rgba(255,255,255,.16)}
+  .placar{font-size:72px;font-weight:900;line-height:1;color:#ffc23d;font-variant-numeric:tabular-nums}
+  .placar span{color:#eef1fa;opacity:.5;font-size:48px;margin:0 6px;vertical-align:middle}
+  .round{font-size:32px;font-weight:800;letter-spacing:.12em;color:rgba(255,255,255,.75);margin-top:6px}
+  .avisos{position:absolute;left:40px;right:40px;top:1450px}
+  .aviso .mais{color:var(--cor)}
+  .aviso b{color:var(--cor)}
+  .legenda{position:absolute;left:40px;right:40px;bottom:36px;padding:22px 26px;border-radius:32px;text-align:center;
+    background:rgba(8,10,20,.88);border:3px solid rgba(255,255,255,.14)}
+  .chamada{font-size:36px;font-weight:800;line-height:1.25}
+  .chamada b{color:var(--cor);font-weight:900}
+  .golpes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+  .chip{font-size:32px;font-weight:800;padding:8px 14px;border-radius:18px;background:#151a2c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+</style>
+</head>
+<body>
+<div class="palco">
+  <canvas id="tela" width="1080" height="1920"></canvas>
+  <header class="hud">
+    <div class="lado l0">
+      <div class="nome" id="nome0"></div>
+      <div class="barra" id="barra0"><div class="rastro" id="rastro0"></div><div class="vida" id="vida0"></div></div>
+      <div class="info"><span id="hp0"></span><span id="torcida0"></span></div>
+    </div>
+    <div class="centro">
+      <div class="placar" id="placar"></div>
+      <div class="round" id="round"></div>
+    </div>
+    <div class="lado l1">
+      <div class="nome" id="nome1"></div>
+      <div class="barra" id="barra1"><div class="rastro" id="rastro1"></div><div class="vida" id="vida1"></div></div>
+      <div class="info"><span id="hp1"></span><span id="torcida1"></span></div>
+    </div>
+  </header>
+  <div class="avisos" id="avisos"></div>
+  <footer class="legenda">
+    <div class="chamada" id="chamada"></div>
+    <div class="golpes" id="golpes"></div>
+  </footer>
+</div>
+<script type="module" src="game.js"></script>
+</body>
+</html>
