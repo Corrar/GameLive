@@ -1,6 +1,7 @@
 {
   "fundo": "#0b0d17",
   "cenario": true,
+  "qualidade": "alta",
   "som": true,
   "voltas": 3,
   "maxCarros": 12,
