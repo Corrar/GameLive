@@ -8,7 +8,7 @@
 
 ### Comentou, aconteceu.
 
-Jogos interativos para **TikTok LIVE**: cada comentário e presente da audiência vira ação dentro do jogo, ao vivo, na tela do streamer.
+Jogos interativos em 3D para **TikTok LIVE**: cada comentário e presente da audiência vira ação dentro do jogo, ao vivo, na tela do streamer.
 
 <br>
 
@@ -41,7 +41,7 @@ O **GameLive** é um conjunto de jogos feitos para rodar *durante* uma live. O s
 |---|---|---|
 | **Ponte** | `ponte/` | Conecta na live pelo `@`, converte comentários e presentes num formato único, conta presentes em sequência sem duplicar e reconecta sozinha se a live cair. |
 | **Simulador** | `jogos/kit/simulador.js` | Gera comentários e presentes falsos — na ponte (`--simular`) e no modo demonstração do navegador. |
-| **Kit** | `jogos/kit/` | Base comum dos jogos: conexão com a ponte, palco 9:16, avisos, placar salvo, times. |
+| **Kit** | `jogos/kit/` | Base comum dos jogos: conexão com a ponte, palco 9:16, avisos, placar salvo, times, efeitos e a base 3D (`cena3d.js`, three.js em `vendor/`). |
 | **Jogos** | `jogos/<nome>/` | Cada jogo é uma página estática com um `config.json` editável. |
 | **Site** | `site/` | Página inicial publicada na Vercel, com a vitrine dos jogos em demonstração. |
 
@@ -100,14 +100,17 @@ Campos comuns aos jogos:
 
 | Campo | O que faz |
 |---|---|
+| `"qualidade": "alta"` | Qualidade da cena 3D: `alta`, `media` ou `baixa` (PC fraco no OBS). Também dá para usar `?qualidade=baixa` na URL. |
 | `"som": true` | Efeitos sonoros (no OBS, marque *Controlar áudio via OBS* na fonte de navegador). |
 | `"fundo"` | Cor, gradiente ou `"transparente"` para sobrepor na câmera; a Urna também aceita `"estudio"` (cenário próprio). |
 | `"rodada": { "segundos": 120, "pausa": 8 }` | Urna: duração da rodada e tempo mostrando o vencedor (`0` = sem cronômetro). |
-| `"numero"`, `"imagem"` em cada lado | Urna: número digitado na urna eletrônica e foto do lado. |
+| `"numero"`, `"imagem"` em cada lado | Urna: número digitado na urna eletrônica (ex.: 13, 22) e imagem mostrada na tela da urna (arquivo em `jogos/urna/imagens/` ou URL). |
 
 Para descobrir o ID dos presentes da sua região, conecte numa live e abra o arquivo `presentes-vistos.json`, que a ponte preenche com todo presente que chegar.
 
 Se a conexão começar a falhar por limite, crie uma chave em [eulerstream.com](https://www.eulerstream.com) e rode com `EULER_API_KEY=sua_chave`.
+
+O que ainda falta fazer está em [`PENDENCIAS.md`](PENDENCIAS.md).
 
 ## Testes
 
