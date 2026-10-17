@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Torre Alta</title>
 <link rel="stylesheet" href="../kit/kit.css">
+<script type="importmap">{ "imports": { "three": "../kit/vendor/three.module.min.js", "three/addons/": "../kit/vendor/addons/" } }</script>
 <style>
   /* faixas escuras atrás do HUD e do rodapé para ler bem em qualquer cor de céu */
   .sombra-topo{position:absolute;left:0;right:0;top:0;height:520px;pointer-events:none;
@@ -17,7 +18,8 @@
   /* altura gigante no centro */
   .altura{position:absolute;left:300px;right:300px;top:96px;text-align:center}
   .altura small{display:block;font-size:40px;color:#bfe9ff;letter-spacing:.08em}
-  .altura b{display:inline-block;font-size:250px;color:#fff;margin-top:4px;font-variant-numeric:tabular-nums}
+  /* altura da linha fixa: a fonte diminui a partir de 4 dígitos (no game.js) sem mexer no resto */
+  .altura b{display:inline-block;font-size:250px;line-height:250px;height:250px;color:#fff;margin-top:4px;font-variant-numeric:tabular-nums}
   .altura span{display:block;font-size:42px;color:#3df2c2;margin-top:6px}
   .combo{position:absolute;left:0;right:0;top:470px;text-align:center;font-size:76px;color:var(--ouro);opacity:0;transition:opacity .2s}
   .combo.on{opacity:1}
@@ -25,7 +27,7 @@
   /* recorde com troféu (esquerda) */
   .recorde{position:absolute;left:30px;top:120px;width:270px;display:flex;flex-direction:column;align-items:center;gap:4px}
   .recorde .copa{font-size:110px;line-height:1;filter:drop-shadow(0 6px 0 rgba(0,0,0,.35))}
-  .recorde b{font-size:92px;color:var(--ouro)}
+  .recorde b{font-size:92px;line-height:92px;height:92px;color:var(--ouro)}
   .recorde small{font-size:34px;color:#fff}
   .recorde.festa .copa{animation:copa 1s cubic-bezier(.2,1.5,.4,1) 3}
   @keyframes copa{40%{transform:scale(1.35) rotate(-12deg)}70%{transform:scale(1.15) rotate(10deg)}}
@@ -37,17 +39,17 @@
   .construtor .fez{font-size:40px;color:var(--cor,#3df2c2)}
   .construtor .vazio{font-size:120px;line-height:1;filter:drop-shadow(0 6px 0 rgba(0,0,0,.35))}
 
-  /* rodapé: ranking, avisos e presentes, sobre um chão sólido que esconde a base da torre quando a câmera sobe */
-  .rodape{position:absolute;left:0;right:0;top:1416px;bottom:0;
-    background:linear-gradient(180deg,#3fae4c 0 16px,#2b7a35 16px 24px,#5a3a22 24px,#3e2716 60%,#2a1a0e);
-    box-shadow:0 -6px 18px rgba(0,0,0,.25)}
+  /* rodapé: ranking, avisos e presentes sobre uma faixa escura translúcida (a cena 3D continua por trás) */
+  .rodape{position:absolute;left:0;right:0;top:1400px;bottom:0;
+    background:linear-gradient(180deg,rgba(10,6,30,0),rgba(10,6,30,.6) 60px,rgba(10,6,30,.8) 180px,rgba(10,6,30,.86))}
   .ranking-box{position:absolute;left:30px;width:580px;top:1440px}
   .ranking-box h3{margin:0 0 10px 6px;font-size:42px;color:#fff}
   .ranking-box .ranking{gap:10px}
   .ranking-box .ranking-item{font-size:30px;padding:4px 18px 4px 8px}
   .ranking-box .avatar.pequeno{--tam:54px}
   .ranking-box .ranking-pts{font-size:38px}
-  .ranking-box .vazio{font-size:30px;color:rgba(255,255,255,.75);padding:10px 8px}
+  .ranking-box .vazio{font-size:30px;color:rgba(255,255,255,.85);padding:12px 22px;border-radius:30px;
+    background:rgba(14,10,32,.82);border:2px solid rgba(255,255,255,.14)}
 
   .avisos{position:absolute;left:636px;right:24px;top:1450px;height:290px;justify-content:flex-start;align-items:stretch}
   .avisos .aviso{font-size:25px;padding:8px 18px;border-radius:24px;line-height:1.15}
@@ -69,7 +71,6 @@
 </head>
 <body>
 <div class="palco" id="palco">
-  <canvas id="tela" width="1080" height="1920"></canvas>
   <div class="sombra-topo"></div>
   <div class="sombra-base"></div>
 

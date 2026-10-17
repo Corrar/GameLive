@@ -2,6 +2,8 @@
   "fundo": "#0b0d17",
   "titulo": "Torre Alta",
   "som": true,
+  "qualidade": "alta",
+  "giroCamera": 0.3,
   "acoes": {
     "bloco": ["Rose"],
     "gigante": ["Finger Heart"],
