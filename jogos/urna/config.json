@@ -4,21 +4,37 @@
   "fundo": "estudio",
   "qualidade": "alta",
   "som": true,
-  "rodada": { "segundos": 120, "pausa": 8 },
+  "rodada": {
+    "segundos": 120,
+    "pausa": 8
+  },
   "lados": [
     {
       "nome": "Lula",
       "numero": "13",
       "cor": "#ff2d55",
       "imagem": "imagens/13.jpg",
-      "presentes": [{ "presente": 5655, "nome": "Rose", "emoji": "🌹", "votos": 1 }]
+      "presentes": [
+        {
+          "presente": 5655,
+          "nome": "Rose",
+          "icone": "imagens/rosa-vermelha.svg",
+          "votos": 1
+        }
+      ]
     },
     {
       "nome": "Bolsonaro",
       "numero": "22",
       "cor": "#2f7bff",
       "imagem": "imagens/22.jpg",
-      "presentes": [{ "presente": "White Rose", "emoji": "🤍", "votos": 1 }]
+      "presentes": [
+        {
+          "presente": "White Rose",
+          "icone": "imagens/rosa-branca.svg",
+          "votos": 1
+        }
+      ]
     }
   ]
 }

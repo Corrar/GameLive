@@ -115,16 +115,18 @@ const MAX_PARTICULAS = 160;
 let vivas = 0;
 
 // Explosão de partículas (ou emojis) a partir de um ponto do palco.
-export function particulas(palco, { x, y, cores = ['#ffd23f', '#ff3d7f', '#3df2c2', '#fff'], qtd = 18, emoji = null, forca = 1 }) {
+// imagem (URL) tem prioridade sobre emoji: serve para presentes sem emoji equivalente (rosa branca).
+export function particulas(palco, { x, y, cores = ['#ffd23f', '#ff3d7f', '#3df2c2', '#fff'], qtd = 18, emoji = null, imagem = null, forca = 1 }) {
   for (let i = 0; i < qtd && vivas < MAX_PARTICULAS; i++) {
-    const p = document.createElement('span');
-    p.className = emoji ? 'particula emoji' : 'particula';
-    if (emoji) p.textContent = emoji;
+    const grande = Boolean(emoji || imagem);
+    const p = document.createElement(imagem ? 'img' : 'span');
+    p.className = imagem ? 'particula emoji imagem' : emoji ? 'particula emoji' : 'particula';
+    if (imagem) { p.src = imagem; p.alt = ''; } else if (emoji) p.textContent = emoji;
     const ang = Math.random() * Math.PI * 2;
     const dist = (120 + Math.random() * 260) * forca;
     p.style.cssText = `left:${x}px;top:${y}px;--dx:${Math.cos(ang) * dist}px;--dy:${Math.sin(ang) * dist - 120 * forca}px;` +
       `--giro:${(Math.random() - .5) * 720}deg;--cor:${cores[i % cores.length]};--t:${700 + Math.random() * 500}ms;` +
-      `--tam:${emoji ? 44 + Math.random() * 30 : 12 + Math.random() * 16}px`;
+      `--tam:${grande ? 44 + Math.random() * 30 : 12 + Math.random() * 16}px`;
     vivas++;
     p.addEventListener('animationend', () => { p.remove(); vivas--; }, { once: true });
     palco.appendChild(p);

@@ -101,6 +101,7 @@ body{
 /* chip de presente: emoji grande + efeito */
 .chip-presente{display:inline-flex;flex-direction:column;align-items:center;gap:2px}
 .chip-presente .emoji{font-size:84px;line-height:1;filter:drop-shadow(0 6px 0 rgba(0,0,0,.3))}
+.chip-presente img.emoji{width:1.45em;height:1.45em;object-fit:contain;display:block}
 .chip-presente .efeito{font-family:var(--fonte-jogo);font-size:40px;color:#fff;-webkit-text-stroke:.12em var(--contorno);paint-order:stroke fill;text-shadow:0 .08em 0 var(--contorno)}
 
 /* legenda de presentes em linha (rodapé dos jogos) */
@@ -123,6 +124,7 @@ body{
 .particula{position:absolute;z-index:30;width:var(--tam);height:var(--tam);margin:calc(var(--tam) / -2);border-radius:4px;
   background:var(--cor);pointer-events:none;animation:particula var(--t) cubic-bezier(.15,.7,.4,1) forwards}
 .particula.emoji{background:none;width:auto;height:auto;font-size:var(--tam);line-height:1}
+.particula.imagem{width:var(--tam);height:var(--tam);object-fit:contain}
 @keyframes particula{to{transform:translate(var(--dx),calc(var(--dy) + 260px)) rotate(var(--giro)) scale(.3);opacity:0}}
 .flutua{position:absolute;z-index:31;translate:-50% -50%;white-space:nowrap;pointer-events:none;
   animation:flutua 1.1s cubic-bezier(.2,.9,.3,1) forwards}

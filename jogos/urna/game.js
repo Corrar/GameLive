@@ -41,9 +41,11 @@ lados.forEach((lado, i) => {
     const chip = document.createElement('div');
     chip.className = 'chip-presente';
     const nomePresente = typeof p.presente === 'number' ? (p.nome ?? (p.presente === 5655 ? 'Rose' : '')) : p.presente;
-    const emoji = document.createElement('span');
+    // ícone do presente: imagem (campo "icone", ex.: rosa branca, que não existe como emoji) ou emoji
+    const emoji = document.createElement(p.icone ? 'img' : 'span');
     emoji.className = 'emoji';
-    emoji.textContent = p.emoji ?? emojiDoPresente(nomePresente);
+    if (p.icone) { emoji.src = p.icone; emoji.alt = nomePresente; }
+    else emoji.textContent = p.emoji ?? emojiDoPresente(nomePresente);
     const efeito = document.createElement('span');
     efeito.className = 'efeito';
     const v = p.votos ?? 1;
@@ -211,7 +213,7 @@ function aoEvento(ev) {
 
     flutuar(palco, { x: CENTRO[i].x, y: CENTRO[i].y - 150, texto: `+${n}`, cor: lado.cor, tamanho: 110 });
     particulas(palco, { x: CENTRO[i].x, y: 780, qtd: Math.min(8 + n * 2, 30), emoji: null, cores: [lado.cor, '#fff', '#ffd23f'] });
-    particulas(palco, { x: i ? 900 : 180, y: 870, qtd: Math.min(n, 6), emoji: regra.emoji ?? emojiDoPresente(ev.presenteNome), forca: .8 });
+    particulas(palco, { x: i ? 900 : 180, y: 870, qtd: Math.min(n, 6), imagem: regra.icone, emoji: regra.emoji ?? emojiDoPresente(ev.presenteNome), forca: .8 });
     mostrarCombo(i, combo.registrar(i, n), n);
 
     ranking.somar(ev, n, { cor: lado.cor });
