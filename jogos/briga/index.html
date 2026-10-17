@@ -5,8 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Briga da Live</title>
 <link rel="stylesheet" href="../kit/kit.css">
+<script type="importmap">{ "imports": { "three": "../kit/vendor/three.module.min.js", "three/addons/": "../kit/vendor/addons/" } }</script>
 <style>
   .l0{--cor:var(--cor-a)}.l1{--cor:var(--cor-b)}
+
+  /* sombra suave em cima e embaixo da cena 3D para o placar ficar legível */
+  .vinheta{position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(180deg,rgba(10,4,24,.82) 0,rgba(10,4,24,.55) 330px,rgba(10,4,24,0) 520px,rgba(10,4,24,0) 1300px,rgba(10,4,24,.78) 1450px,rgba(10,4,24,.94) 1600px,rgba(10,4,24,.96) 100%)}
+  /* clarão branco só sobre a cena 3D (fica embaixo do placar) */
+  .clarao{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
 
   /* topo: troféus de rounds e pílula do round */
   .topo{position:absolute;left:36px;right:36px;top:28px;height:112px;display:flex;align-items:center;justify-content:space-between}
@@ -34,7 +41,8 @@
   .barra.apanha .vida{filter:brightness(1.8)}
 
   /* torcida e combo de cada lutador */
-  .infos{position:absolute;left:30px;right:30px;top:370px;display:flex;justify-content:space-between}
+  .infos{position:absolute;left:30px;right:30px;top:370px;display:flex;justify-content:space-between;transition:opacity .3s}
+  .palco.fim-round .infos{opacity:0}
   .info{display:flex;align-items:center;gap:18px}
   .info.l1{flex-direction:row-reverse}
   .torcida{display:inline-flex;white-space:nowrap;flex:none;align-items:center;gap:10px;padding:6px 20px;border-radius:999px;font-size:32px;font-weight:800;
@@ -51,14 +59,31 @@
     clip-path:polygon(50% 0,61% 30%,93% 14%,74% 42%,100% 55%,70% 63%,82% 95%,54% 74%,35% 100%,32% 70%,0 78%,22% 52%,4% 22%,36% 32%);opacity:.95}
   @keyframes onoma{0%{opacity:0;transform:scale(.2)}18%{opacity:1;transform:scale(1.25)}32%{transform:scale(1)}75%{opacity:1}100%{opacity:0;transform:scale(1.08) translateY(-30px)}}
 
-  /* K.O.! gigante e faixa do vencedor */
-  .ko{position:absolute;z-index:26;left:0;right:0;top:440px;text-align:center;font-size:270px;color:#ff3b4f;pointer-events:none;
+  /* dano que pula da cabeça de quem apanha */
+  .dano-voa{position:absolute;z-index:23;translate:-50% -50%;pointer-events:none;text-align:center;white-space:nowrap;font-size:var(--tam);color:#fff;
+    animation:danoVoa 1.25s cubic-bezier(.2,.9,.3,1) forwards}
+  .dano-voa small{display:block;font-size:40px;color:var(--cor-nick)}
+  @keyframes danoVoa{0%{opacity:0;transform:translate(0,0) scale(.5)}12%{opacity:1;transform:translate(calc(var(--dx) * .4),-70px) scale(1.25)}
+    26%{transform:translate(calc(var(--dx) * .6),-95px) scale(1)}75%{opacity:1}100%{opacity:0;transform:translate(var(--dx),-40px) scale(.95)}}
+
+  /* ROUND N / LUTEM! */
+  .anuncio{position:absolute;z-index:25;left:0;right:0;top:500px;text-align:center;pointer-events:none;opacity:0}
+  .anuncio b{display:block;font-size:150px;color:var(--ouro)}
+  .anuncio span{display:inline-block;font-size:120px;color:#fff;rotate:-3deg;margin-top:10px}
+  .anuncio.mostra{animation:anuncio 1.8s ease-out both}
+  @keyframes anuncio{0%{opacity:0;transform:scale(.5)}14%{opacity:1;transform:scale(1.1)}24%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:scale(1.04)}}
+
+  /* K.O.! gigante (no lugar da linha de torcida/combos) e faixa do vencedor por cima dos nomes e barras:
+     a cena fica livre para ver quem ganhou comemorando e quem caiu */
+  .ko{position:absolute;z-index:26;left:0;right:0;top:380px;text-align:center;font-size:220px;color:#ff3b4f;pointer-events:none;
     -webkit-text-stroke:.09em var(--contorno);animation:ko .7s cubic-bezier(.2,1.3,.4,1) both}
   .ko span{display:inline-block;animation:koBrilho .5s .7s ease-in-out infinite alternate}
   @keyframes ko{0%{opacity:0;transform:scale(3.2) rotate(-14deg)}60%{opacity:1;transform:scale(.92) rotate(3deg)}100%{transform:scale(1) rotate(-4deg)}}
   @keyframes koBrilho{to{color:var(--ouro)}}
-  .vencedor{top:750px;padding:30px 40px 40px;font-size:96px}
-  .vencedor small{font-size:46px}
+  .vencedor{top:150px;padding:20px 40px 24px;font-size:84px}
+  .nomes,.barras{transition:opacity .25s}
+  .palco.com-faixa .nomes,.palco.com-faixa .barras{opacity:0}
+  .vencedor small{font-size:44px}
 
   /* legenda dos golpes */
   .legenda{position:absolute;left:24px;right:24px;top:1394px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
@@ -87,11 +112,18 @@
   .avisos{position:absolute;left:660px;right:24px;top:1772px;align-items:stretch}
   .avisos .aviso{font-size:24px;padding:6px 16px;border-radius:22px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
   .aviso .mais,.aviso b{color:var(--cor)}
+
+  /* fundo transparente (sobre a câmera da live): painel próprio atrás do HUD de baixo */
+  .palco.transparente .ranking-box,.palco.transparente .ultimo{isolation:isolate}
+  .palco.transparente .ranking-box::before,.palco.transparente .ultimo::before{content:"";position:absolute;z-index:-1;inset:-12px -12px -14px;
+    border-radius:30px;background:rgba(14,8,32,.78);box-shadow:0 0 0 3px rgba(255,255,255,.12)}
+  .palco.transparente .ultimo::before{inset:-12px 0 -14px}
 </style>
 </head>
 <body>
 <div class="palco">
-  <canvas id="tela" width="1080" height="1920"></canvas>
+  <div class="vinheta"></div>
+  <div class="clarao" id="clarao"></div>
 
   <div class="topo">
     <div class="trofeu">🏆<b class="txt-jogo" id="trofeu0">0</b></div>
@@ -117,6 +149,7 @@
   <div class="ranking-box"><h3 class="titulo-jogo">🔥 Quem mais bateu</h3><ol class="ranking" id="ranking"></ol></div>
   <div class="ultimo" id="ultimo"></div>
   <div class="avisos" id="avisos"></div>
+  <div class="anuncio txt-jogo" id="anuncio"><b id="anuncioRound">ROUND 1</b><span>LUTEM!</span></div>
 </div>
 <script type="module" src="game.js"></script>
 </body>

@@ -1,9 +1,10 @@
 {
   "fundo": "arena",
+  "qualidade": "alta",
   "som": true,
   "lutadores": [
-    { "nome": "Trovão", "cor": "#2fe2b0" },
-    { "nome": "Furacão", "cor": "#ff3d7f" }
+    { "nome": "Trovão", "cor": "#2fe2b0", "pele": "#a86f4c", "cabelo": "#1c140f", "luva": "#d61f2c" },
+    { "nome": "Furacão", "cor": "#ff3d7f", "pele": "#e8b48c", "cabelo": "#6a4325", "luva": "#d61f2c" }
   ],
   "palavras": { "A": ["A", "1"], "B": ["B", "2"] },
   "vida": 500,
