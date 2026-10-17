@@ -213,13 +213,13 @@ function aoEvento(ev) {
     particulas(palco, { x: CENTRO[i].x, y: 780, qtd: Math.min(8 + n * 2, 30), emoji: null, cores: [lado.cor, '#fff', '#ffd23f'] });
     particulas(palco, { x: i ? 900 : 180, y: 870, qtd: Math.min(n, 6), emoji: regra.emoji ?? emojiDoPresente(ev.presenteNome), forca: .8 });
     mostrarCombo(i, combo.registrar(i, n), n);
-    mostrarUltimo(ev, i);
 
     ranking.somar(ev, n, { cor: lado.cor });
     pintarRanking($('ranking'), ranking.top(4), { destaque: ev.user });
     avisar(html`<span class="l${i}"><b>${ev.nome || ev.user}</b> ${ev.quantidade}× ${ev.presenteNome} <span class="mais">+${n}</span></span>`);
 
-    urna.votar(i);
+    // "quem votou" troca só quando a urna começa a digitar este voto: nome e número na tela batem
+    urna.votar(i, () => mostrarUltimo(ev, i));
 
     const depois = lider();
     if (antes !== -1 && depois !== -1 && antes !== depois) mostrarVirada(depois);

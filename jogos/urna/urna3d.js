@@ -20,7 +20,8 @@ export function criarUrna3d(palco, cfg) {
   const transparente = cfg.fundo === 'transparente';
   const c3d = criarCena(palco, {
     cfg, luz: 'estudio', fundo: transparente ? null : '#b85a1c', exposicao: 1,
-    camera: { pos: [0, 12.6, 14.9], alvo: [0, 1.4, -1], fov: 30 },
+    // alvo um pouco acima do centro: a urna desce no quadro e sobra respiro para 'quem votou' em cima dela
+    camera: { pos: [0, 12.6, 14.9], alvo: [0, 1.7, -1], fov: 30 },
     // sol alto à esquerda e um pouco atrás: a urna faz sombra na mesa e a mão no teclado, para a frente
     sol: { pos: [-6, 11, -3], alcance: 7 }
   });
@@ -92,9 +93,15 @@ export function criarUrna3d(palco, cfg) {
     urna.add(pe);
   }
   urna.position.y = .08;
-  // cabo saindo por trás até fora da mesa
-  const cabo = new THREE.CatmullRomCurve3([new THREE.Vector3(1.6, .45, -1.5), new THREE.Vector3(1.9, .08, -2.6), new THREE.Vector3(3.5, .06, -4.2), new THREE.Vector3(7, .06, -5)]);
-  urna.add(malha(new THREE.TubeGeometry(cabo, 40, .06, 10), material('#3a3a3a', { rugosidade: .5, verniz: .3 })));
+  // cabo curto saindo por trás até a fonte de energia, deitada na mesa atrás da urna
+  // (fica quase toda escondida pela urna: não sobe na tela nem termina no vazio no modo transparente)
+  const corCabo = material('#2f2f31', { rugosidade: .5, verniz: .3 });
+  const cabo = new THREE.CatmullRomCurve3([new THREE.Vector3(1.6, .45, -1.5), new THREE.Vector3(1.7, .1, -1.95),
+    new THREE.Vector3(1.4, .05, -2.3), new THREE.Vector3(1.0, .09, -2.36)]);
+  urna.add(malha(new THREE.TubeGeometry(cabo, 16, .06, 8), corCabo));
+  const fonte = malha(caixa(.8, .22, .45, .06), corCabo);
+  fonte.position.set(.6, .03, -2.36);
+  urna.add(fonte);
 
   // tampo inclinado: tudo que fica em cima (tela, teclado) mora neste grupo
   const inclinacao = Math.atan((ALT_TRAS - ALT_FRENTE) / PROF);
@@ -179,7 +186,6 @@ export function criarUrna3d(palco, cfg) {
   const fontePadrao = (peso, px) => `${peso} ${px}px Arial, "Helvetica Neue", sans-serif`;
   // foto de cada lado: a "imagem" do config (repinta a tela quando ela chega) ou o retrato ilustrado
   const fotos = lados.map((lado) => carregarImagem(lado.imagem, () => pintarTela(estadoTela)));
-  let cursorAceso = true;
 
   // estado: { modo: 'espera' | 'digitando' | 'fim', lado, digitos }
   function pintarTela({ modo = 'espera', lado = 0, digitos = 0 } = {}) {
@@ -218,8 +224,8 @@ export function criarUrna3d(palco, cfg) {
           ctx.fillStyle = '#111'; ctx.font = fontePadrao(800, Math.round(ab * .86)); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
           ctx.fillText(d, x + lb / 2, y + ab / 2 + ab * .05);
           ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-        } else if (k === digitos && cursorAceso) {
-          ctx.fillStyle = '#111'; ctx.fillRect(x + lb * .16, y + ab - 40, lb * .68, 14);
+        } else if (k === digitos) {
+          colocarCursor(x + lb * .16, y + ab - 40, lb * .68, 14);
         }
       });
       if (completo) {
@@ -243,16 +249,21 @@ export function criarUrna3d(palco, cfg) {
       ctx.fillText('LARANJA para REINICIAR este voto', 70, h - 30);
     });
   }
+  // cursor piscando: um quad preto em cima do vidro (só liga/desliga; a textura da tela não é reenviada)
+  const cursor = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ color: '#111111' }));
+  cursor.visible = false;
+  vidro.add(cursor);
+  let cursorPosto = false;
+  // retângulo em px do canvas da tela → plano do vidro (2,08 × 1,5)
+  function colocarCursor(x, y, w, h) {
+    cursor.scale.set(w / TELA_W * 2.08, h / TELA_H * 1.5, 1);
+    cursor.position.set(((x + w / 2) / TELA_W - .5) * 2.08, (.5 - (y + h / 2) / TELA_H) * 1.5, .002);
+    cursorPosto = true;
+  }
   let estadoTela = { modo: 'espera', lado: 0, digitos: 0 };
-  const telaPara = (e) => { estadoTela = e; pintarTela(e); };
+  const telaPara = (e) => { estadoTela = e; cursorPosto = false; pintarTela(e); };
   telaPara(estadoTela);
-  // cursor piscando no relógio do jogo; só repinta quando ele muda e quando há cursor na tela
-  c3d.aoQuadro((dt, t) => {
-    const aceso = Math.floor(t / .45) % 2 === 0;
-    if (aceso === cursorAceso) return;
-    cursorAceso = aceso;
-    if (estadoTela.modo !== 'fim' && estadoTela.digitos < numeros[estadoTela.lado].length) pintarTela(estadoTela);
-  });
+  c3d.aoQuadro((dt, t) => { cursor.visible = cursorPosto && Math.floor(t / .45) % 2 === 0; });
 
   /* ---------- a mão ---------- */
   const mao = criarMao({ passo: c3d.qualidade.nome === 'baixa' ? .026 : .019 });
@@ -320,10 +331,11 @@ export function criarUrna3d(palco, cfg) {
         // sai do descanso: a mão vira para o teclado enquanto vai até a primeira tecla
         c3d.tween(mao.giro, GIRO_DIGITA, 420, curvas.suave);
         while (pendentes.length) {
-          const lado = pendentes.shift();
+          const { lado, aoComecar } = pendentes.shift();
           const rapido = pendentes.length > 0;
           const numero = numeros[lado];
           telaPara({ modo: 'digitando', lado, digitos: 0 });
+          aoComecar?.();
           for (let k = 0; k < numero.length; k++) {
             const tecla = teclas.get(numero[k]);
             if (tecla) await apertar(tecla, rapido);
@@ -351,8 +363,14 @@ export function criarUrna3d(palco, cfg) {
 
   return {
     c3d,
-    // cada presente vira uma digitação; no máximo 2 esperando para não atrasar demais
-    votar(lado) { if (pendentes.length < 2) pendentes.push(lado); digitar(); },
+    // cada presente vira uma digitação; aoComecar roda quando a mão começa a digitar esse voto
+    // (para o placar mostrar quem a urna está digitando). No máximo 2 esperando: com a fila cheia
+    // o último da fila dá lugar ao mais novo, então quem acabou de votar aparece logo
+    votar(lado, aoComecar) {
+      const voto = { lado, aoComecar };
+      if (pendentes.length < 2) pendentes.push(voto); else pendentes[pendentes.length - 1] = voto;
+      digitar();
+    },
     comemorar(cor) {
       particulas.confete({ cores: [cor, '#ffd23f', '#ffffff'], qtd: 260, area: [-4, 4], altura: 9, z: [-2, 3], tamanho: .12 });
       c3d.tremer(.12, .5);
