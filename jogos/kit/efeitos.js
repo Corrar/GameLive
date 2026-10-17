@@ -5,7 +5,7 @@ const EMOJIS = {
   'rose': '🌹', 'gg': '✨', 'doughnut': '🍩', 'finger heart': '🫰', 'sunglasses': '🕶️',
   'galaxy': '🌌', 'tiktok': '🎵', 'heart me': '💖', 'ice cream cone': '🍦', 'perfume': '🧴',
   'lion': '🦁', 'universe': '🪐', 'hand hearts': '🫶', 'love you': '🥰', 'corgi': '🐶',
-  'money gun': '💸', 'confetti': '🎊', 'hat and mustache': '🎩', 'rosa': '🌹', 'heart': '❤️'
+  'money gun': '💸', 'confetti': '🎊', 'hat and mustache': '🎩', 'rosa': '🌹', 'heart': '❤️', 'white rose': '🤍'
 };
 
 // Emoji para um presente; ref pode ser o nome do presente ou um item de config com { emoji }.

@@ -5,8 +5,9 @@ const NICKS = ['luna.gg', 'beto_rx', 'cami.zz', 'davi.mp4', 'eli_jogos', 'fefe.a
 const TEXTOS = ['A', 'B', 'A', 'B', 'entrar', 'vai!!', 'kkkk', 'bora', 'G'];
 // shortcut: IDs além da Rose (5655) são inventados; os jogos mapeiam por nome no config.
 const PRESENTES = [
-  { id: 5655, nome: 'Rose', peso: 35, max: 5 },
-  { id: 6064, nome: 'GG', peso: 35, max: 5 },
+  { id: 5655, nome: 'Rose', peso: 30, max: 5 },
+  { id: 6064, nome: 'GG', peso: 15, max: 5 },
+  { id: 900005, nome: 'White Rose', peso: 30, max: 5 },
   { id: 900001, nome: 'Doughnut', peso: 8, max: 1 },
   { id: 900002, nome: 'Finger Heart', peso: 8, max: 1 },
   { id: 900003, nome: 'Sunglasses', peso: 8, max: 1 },

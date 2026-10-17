@@ -52,8 +52,9 @@ O agente diz ter corrigido os 10 itens; a revisão de confirmação foi interrom
   (a do 22 tem assinatura do artista). Confirmar se pode usar (direitos autorais) — também aparecem no site público.
   Para trocar ou desligar: campo `imagem` de cada lado em `jogos/urna/config.json` (vazio = retrato ilustrado genérico).
 - [ ] Tema político em live com presentes: regras de monetização do TikTok e, em período eleitoral, a vedação a enquetes do TSE.
-- [ ] Cores da Urna: hoje 13 = verde e 22 = vermelho. Trocar se quiser (campo `cor` em `jogos/urna/config.json`).
-- [ ] Juntar a branch `claude/nice-galileo-k2f1k9` ao `main` (sem isso, um push direto no `main` publicaria a versão antiga na Vercel).
+- [x] Cores da Urna: 13 = vermelho (Rose) e 22 = azul (White Rose), para casar com a cor da rosa que vota. Trocar se quiser (campo `cor` em `jogos/urna/config.json`).
+- [ ] ID da White Rose: a Urna casa esse presente pelo nome; na primeira live, confira o nome/ID real em `presentes-vistos.json` e, se for diferente, ajuste `jogos/urna/config.json`.
+- [x] Branch `claude/nice-galileo-k2f1k9` juntada ao `main` (PR #1).
 
 ## Como retomar
 1. `npm install` e `npm run simular` → abrir `http://localhost:3000/jogos/<jogo>/` (adicione `?qualidade=baixa` em PC fraco).

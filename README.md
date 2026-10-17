@@ -49,7 +49,7 @@ O **GameLive** é um conjunto de jogos feitos para rodar *durante* uma live. O s
 
 | Jogo | Como o chat joga | Status |
 |---|---|---|
-| 🗳️ **Urna da Live** | Presente vira voto; combos, urna eletrônica, ranking e rodadas com tempo | ✅ pronto |
+| 🗳️ **Urna da Live** | Rosa (Rose) vota 13, Rosa Branca (White Rose) vota 22; combos, urna eletrônica, ranking e rodadas com tempo | ✅ pronto |
 | 🪢 **Cabo de Guerra** | Comente o seu time e puxe a corda; presente puxa mais forte | ✅ pronto |
 | 🏎️ **Corrida do Chat** | Quem comenta entra na pista; presentes viram nitro e óleo | ✅ pronto |
 | 🗼 **Torre Alta** | Presentes constroem e derrubam a torre | ✅ pronto |

@@ -7,18 +7,18 @@
   "rodada": { "segundos": 120, "pausa": 8 },
   "lados": [
     {
-      "nome": "Lado A",
+      "nome": "Lula",
       "numero": "13",
-      "cor": "#2fe26a",
+      "cor": "#ff2d55",
       "imagem": "imagens/13.jpg",
-      "presentes": [{ "presente": 5655, "votos": 1 }]
+      "presentes": [{ "presente": 5655, "nome": "Rose", "emoji": "🌹", "votos": 1 }]
     },
     {
-      "nome": "Lado B",
+      "nome": "Bolsonaro",
       "numero": "22",
-      "cor": "#ff3358",
+      "cor": "#2f7bff",
       "imagem": "imagens/22.jpg",
-      "presentes": [{ "presente": "GG", "votos": 1 }]
+      "presentes": [{ "presente": "White Rose", "emoji": "🤍", "votos": 1 }]
     }
   ]
 }
