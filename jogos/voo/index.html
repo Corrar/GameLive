@@ -5,8 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Voo da Live</title>
 <link rel="stylesheet" href="../kit/kit.css">
+<script type="importmap">{ "imports": { "three": "../kit/vendor/three.module.min.js", "three/addons/": "../kit/vendor/addons/" } }</script>
 <style>
-  #tela{transition:filter .5s}
+  .cena3d{transition:filter .5s}
+
+  /* sombra suave no pé da tela, por trás do ranking e da legenda */
+  .chao-sombra{position:absolute;left:0;right:0;top:1500px;bottom:0;pointer-events:none;
+    background:linear-gradient(180deg,rgba(14,8,32,0),rgba(14,8,32,.5) 38%,rgba(14,8,32,.62))}
 
   /* topo: recorde, voo atual e quedas */
   .topo{position:absolute;left:30px;right:30px;top:22px;display:grid;grid-template-columns:1fr auto 1fr;align-items:center}
@@ -80,8 +85,7 @@
 </head>
 <body>
 <div class="palco">
-  <canvas id="tela" width="1080" height="1920"></canvas>
-
+  <div class="chao-sombra"></div>
   <header class="topo">
     <div class="canto"><span class="ico" id="trofeu">🏆</span><div><small class="txt-jogo">RECORDE</small><b class="txt-jogo" id="recorde">0</b></div></div>
     <div class="pilula" id="voo">VOO 1</div>
