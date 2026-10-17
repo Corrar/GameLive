@@ -13,4 +13,7 @@ await cp(new URL('jogos/', raiz), new URL('jogos/', dist), {
   recursive: true, filter: (origem) => !origem.endsWith('.test.js')
 });
 await cp(new URL('assets/', raiz), new URL('assets/', dist), { recursive: true });
+// diagrama interativo da arquitetura (docs/arquitetura/, gerado com o Archify)
+await mkdir(new URL('arquitetura/', dist));
+await cp(new URL('docs/arquitetura/gamelive.architecture.html', raiz), new URL('arquitetura/index.html', dist));
 console.log('site montado em dist/');

@@ -45,6 +45,8 @@ O **GameLive** é um conjunto de jogos feitos para rodar *durante* uma live. O s
 | **Jogos** | `jogos/<nome>/` | Cada jogo é uma página estática com um `config.json` editável. |
 | **Site** | `site/` | Página inicial publicada na Vercel, com a vitrine dos jogos em demonstração. |
 
+**Diagrama interativo:** [`docs/arquitetura/gamelive.architecture.html`](docs/arquitetura/gamelive.architecture.html) (também publicado em [gamelive-one.vercel.app/arquitetura/](https://gamelive-one.vercel.app/arquitetura/)). Gerado com o [Archify](https://github.com/tt-a1i/archify) a partir do código: cada caixa aponta para as linhas que a comprovam. A fonte é o `gamelive.architecture.json` ao lado; para regenerar depois de mudar a arquitetura, peça ao agente "use o Archify para atualizar o diagrama do GameLive".
+
 ## Jogos
 
 | Jogo | Como o chat joga | Status |

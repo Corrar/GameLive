@@ -1,0 +1,487 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "GameLive — da live do TikTok à tela do streamer",
+    "output": "docs/arquitetura/gamelive.architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/Corrar/GameLive",
+      "provider": "github",
+      "revision": "035df6329d6b5203e6284bfd4fc4481ec34e63c7"
+    }
+  },
+  "components": [
+    {
+      "id": "tiktok",
+      "type": "external",
+      "label": "TikTok LIVE",
+      "sublabel": "live do streamer",
+      "pos": [
+        40,
+        300
+      ],
+      "size": [
+        120,
+        60
+      ]
+    },
+    {
+      "id": "adaptador",
+      "type": "backend",
+      "label": "Adaptador TikTok",
+      "sublabel": "ponte/tiktok.js",
+      "tag": "tiktok-live-connector",
+      "pos": [
+        260,
+        300
+      ],
+      "size": [
+        120,
+        64
+      ],
+      "sources": [
+        {
+          "path": "ponte/tiktok.js",
+          "line": 38,
+          "end_line": 41,
+          "label": "conexão pelo @"
+        },
+        {
+          "path": "ponte/tiktok.js",
+          "line": 77,
+          "end_line": 88,
+          "label": "CHAT e GIFT viram eventos"
+        },
+        {
+          "path": "ponte/tiktok.js",
+          "line": 71,
+          "end_line": 74,
+          "label": "reconexão"
+        }
+      ]
+    },
+    {
+      "id": "contador",
+      "type": "backend",
+      "label": "Contador de combo",
+      "sublabel": "ponte/sequencia.js",
+      "pos": [
+        260,
+        150
+      ],
+      "size": [
+        120,
+        60
+      ],
+      "sources": [
+        {
+          "path": "ponte/sequencia.js",
+          "line": 2,
+          "end_line": 12,
+          "label": "só o acréscimo do combo"
+        }
+      ]
+    },
+    {
+      "id": "vistos",
+      "type": "database",
+      "label": "presentes-vistos",
+      "sublabel": ".json com IDs vistos",
+      "pos": [
+        260,
+        440
+      ],
+      "size": [
+        120,
+        60
+      ],
+      "sources": [
+        {
+          "path": "ponte/tiktok.js",
+          "line": 46,
+          "end_line": 52,
+          "label": "writeFile com atraso de 5 s"
+        }
+      ]
+    },
+    {
+      "id": "servidor",
+      "type": "backend",
+      "label": "Servidor da ponte",
+      "sublabel": "ponte/server.js",
+      "tag": "HTTP + WS :3000",
+      "pos": [
+        480,
+        300
+      ],
+      "size": [
+        120,
+        64
+      ],
+      "sources": [
+        {
+          "path": "ponte/server.js",
+          "line": 56,
+          "end_line": 68,
+          "label": "WebSocketServer e emitir()"
+        },
+        {
+          "path": "ponte/server.js",
+          "line": 70,
+          "end_line": 76,
+          "label": "escuta só em 127.0.0.1"
+        },
+        {
+          "path": "ponte/server.js",
+          "line": 34,
+          "end_line": 36,
+          "label": "serve /jogos/"
+        }
+      ]
+    },
+    {
+      "id": "simulador",
+      "type": "backend",
+      "label": "Simulador",
+      "sublabel": "jogos/kit/simulador.js",
+      "tag": "eventos falsos",
+      "pos": [
+        590,
+        580
+      ],
+      "size": [
+        120,
+        64
+      ],
+      "sources": [
+        {
+          "path": "jogos/kit/simulador.js",
+          "line": 34,
+          "end_line": 41,
+          "label": "iniciarSimulador"
+        },
+        {
+          "path": "ponte/simulador.js",
+          "line": 1,
+          "end_line": 2,
+          "label": "reexportado para a ponte"
+        }
+      ]
+    },
+    {
+      "id": "kit",
+      "type": "frontend",
+      "label": "Kit",
+      "sublabel": "jogos/kit/kit.js",
+      "tag": "conectar()",
+      "pos": [
+        700,
+        300
+      ],
+      "size": [
+        120,
+        64
+      ],
+      "sources": [
+        {
+          "path": "jogos/kit/kit.js",
+          "line": 157,
+          "end_line": 196,
+          "label": "WebSocket ou demonstração"
+        },
+        {
+          "path": "jogos/kit/kit.js",
+          "line": 76,
+          "end_line": 80,
+          "label": "ehDemo fora de localhost"
+        }
+      ]
+    },
+    {
+      "id": "placar",
+      "type": "database",
+      "label": "localStorage",
+      "sublabel": "placar salvo",
+      "pos": [
+        700,
+        150
+      ],
+      "size": [
+        120,
+        60
+      ],
+      "sources": [
+        {
+          "path": "jogos/kit/kit.js",
+          "line": 99,
+          "end_line": 106,
+          "label": "guardar / lembrar"
+        }
+      ]
+    },
+    {
+      "id": "jogo",
+      "type": "frontend",
+      "label": "Jogo",
+      "sublabel": "jogos/<nome>/game.js",
+      "tag": "8 jogos",
+      "pos": [
+        920,
+        300
+      ],
+      "size": [
+        120,
+        64
+      ],
+      "sources": [
+        {
+          "path": "jogos/urna/game.js",
+          "line": 1,
+          "end_line": 24,
+          "label": "Urna: importa kit e cena 3D"
+        },
+        {
+          "path": "jogos/index.html",
+          "line": 25,
+          "end_line": 32,
+          "label": "lista dos 8 jogos"
+        }
+      ]
+    },
+    {
+      "id": "cena3d",
+      "type": "frontend",
+      "label": "Base 3D",
+      "sublabel": "jogos/kit/cena3d.js",
+      "tag": "three.js",
+      "pos": [
+        920,
+        150
+      ],
+      "size": [
+        120,
+        64
+      ],
+      "sources": [
+        {
+          "path": "jogos/kit/cena3d.js",
+          "line": 6,
+          "end_line": 12,
+          "label": "three e addons"
+        },
+        {
+          "path": "jogos/kit/cena3d.js",
+          "line": 53,
+          "label": "WebGLRenderer"
+        }
+      ]
+    },
+    {
+      "id": "config",
+      "type": "database",
+      "label": "config.json",
+      "sublabel": "presentes, cores, lados",
+      "pos": [
+        920,
+        440
+      ],
+      "size": [
+        120,
+        60
+      ],
+      "sources": [
+        {
+          "path": "jogos/kit/kit.js",
+          "line": 87,
+          "end_line": 91,
+          "label": "carregarConfig"
+        }
+      ]
+    },
+    {
+      "id": "obs",
+      "type": "external",
+      "label": "OBS / LIVE Studio",
+      "sublabel": "fonte Navegador 1080×1920",
+      "pos": [
+        1120,
+        300
+      ],
+      "size": [
+        120,
+        64
+      ]
+    },
+    {
+      "id": "vercel",
+      "type": "cloud",
+      "label": "Vercel",
+      "sublabel": "gamelive-one.vercel.app",
+      "tag": "demonstração",
+      "pos": [
+        1120,
+        440
+      ],
+      "size": [
+        120,
+        64
+      ],
+      "sources": [
+        {
+          "path": "vercel.json",
+          "line": 1,
+          "end_line": 9,
+          "label": "buildCommand e dist/"
+        },
+        {
+          "path": "scripts/site.mjs",
+          "line": 9,
+          "end_line": 16,
+          "label": "copia site/, jogos/, assets/"
+        }
+      ]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Ponte — Node.js no PC do streamer (127.0.0.1:3000)",
+      "wraps": [
+        "adaptador",
+        "contador",
+        "vistos",
+        "servidor"
+      ]
+    },
+    {
+      "kind": "region",
+      "label": "Navegador — página do jogo capturada pelo OBS",
+      "wraps": [
+        "kit",
+        "placar",
+        "jogo",
+        "cena3d",
+        "config"
+      ]
+    }
+  ],
+  "connections": [
+    {
+      "id": "live-eventos",
+      "from": "tiktok",
+      "to": "adaptador",
+      "label": "chat + gift",
+      "variant": "emphasis"
+    },
+    {
+      "id": "contar",
+      "from": "adaptador",
+      "to": "contador",
+      "label": "repeatCount"
+    },
+    {
+      "id": "gravar-vistos",
+      "from": "adaptador",
+      "to": "vistos",
+      "label": "grava",
+      "variant": "dashed"
+    },
+    {
+      "id": "emitir",
+      "from": "adaptador",
+      "to": "servidor",
+      "label": "emitir()",
+      "variant": "emphasis"
+    },
+    {
+      "id": "ws",
+      "from": "servidor",
+      "to": "kit",
+      "label": "WebSocket",
+      "variant": "emphasis"
+    },
+    {
+      "id": "simular",
+      "from": "servidor",
+      "to": "simulador",
+      "label": "--simular",
+      "variant": "dashed"
+    },
+    {
+      "id": "demo",
+      "from": "kit",
+      "to": "simulador",
+      "label": "fora de localhost",
+      "variant": "dashed"
+    },
+    {
+      "id": "placar-salvo",
+      "from": "kit",
+      "to": "placar",
+      "label": "placar"
+    },
+    {
+      "id": "ao-evento",
+      "from": "kit",
+      "to": "jogo",
+      "label": "aoEvento",
+      "variant": "emphasis"
+    },
+    {
+      "id": "cena",
+      "from": "jogo",
+      "to": "cena3d",
+      "label": "cena 3D"
+    },
+    {
+      "id": "config-leitura",
+      "from": "jogo",
+      "to": "config",
+      "label": "lê"
+    },
+    {
+      "id": "captura",
+      "from": "jogo",
+      "to": "obs",
+      "label": "captura",
+      "variant": "emphasis"
+    },
+    {
+      "id": "publica",
+      "from": "vercel",
+      "to": "jogo",
+      "label": "serve /jogos/",
+      "variant": "dashed"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Ponte",
+      "items": [
+        "Conecta na live pelo @ com a biblioteca comunitária tiktok-live-connector (sem API oficial)",
+        "Presentes em sequência viram só o acréscimo, sem duplicar",
+        "Reconecta sozinha 15 s depois de cair; EULER_API_KEY opcional para o limite de assinatura"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "Jogos",
+      "items": [
+        "Páginas HTML5 estáticas, sem build; palco 9:16 para captura em 1080×1920",
+        "Cada jogo lê o próprio config.json: nomes, cores e quais presentes fazem o quê",
+        "Cena 3D com three.js; placar e avisos em HTML por cima do canvas"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Demonstração",
+      "items": [
+        "Fora de localhost não há ponte: o kit liga o simulador no próprio navegador",
+        "O mesmo simulador roda na ponte com --simular para testar sem live",
+        "A Vercel publica site/ + jogos/ + assets/ montados por scripts/site.mjs"
+      ]
+    }
+  ]
+}
