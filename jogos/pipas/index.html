@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Céu de Pipas</title>
 <link rel="stylesheet" href="../kit/kit.css">
+<script type="importmap">{ "imports": { "three": "../kit/vendor/three.module.min.js", "three/addons/": "../kit/vendor/addons/" } }</script>
 <style>
+  /* a cena 3D (lajes, céu, pipas e linhas) fica no canvas atrás; aqui só o placar em HTML */
   /* topo: título, contadores e presentes */
   .topo{position:absolute;left:0;right:0;top:24px;z-index:5;text-align:center;pointer-events:none}
   .topo h1{margin:0;font-size:100px;line-height:1;color:#fff}
@@ -30,7 +32,7 @@
   .ranking-item.vazio{justify-content:center;font-size:28px;color:#ffe9a8;padding:12px 20px}
 
   /* destaque: avatar grande de quem mandou o último presente */
-  .destaque{position:absolute;z-index:5;right:28px;width:400px;bottom:142px;height:380px;padding:14px 14px 10px;
+  .destaque{position:absolute;z-index:5;right:28px;width:400px;bottom:142px;padding:14px 14px 16px;
     border-radius:40px;text-align:center;display:flex;flex-direction:column;align-items:center;
     background:radial-gradient(120% 90% at 50% 0%,rgba(70,40,120,.94),rgba(16,10,34,.94));
     border:6px solid var(--cor,#fff);box-shadow:0 8px 0 rgba(0,0,0,.35),0 0 46px color-mix(in srgb,var(--cor,#fff) 70%,transparent)}
@@ -41,17 +43,27 @@
   .destaque .vazio-emoji{margin-top:8px;font-size:100px;line-height:118px}
   .destaque .quem{margin-top:8px;max-width:100%;font-size:42px;line-height:1.15;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px}
   .destaque .acao{margin-top:2px;font-size:36px;line-height:1.2;color:var(--cor,#fff);white-space:nowrap}
-  .destaque .combo{margin-top:6px;height:46px;font-size:42px;color:var(--ouro);opacity:0}
-  .destaque .combo.on{opacity:1}
+  /* o combo só ocupa espaço quando aparece (o cartão cresce para cima) */
+  .destaque .combo{margin-top:4px;font-size:42px;line-height:1.1;color:var(--ouro);display:none}
+  .destaque .combo.on{display:block}
 
   .avisos{position:absolute;z-index:5;right:28px;width:400px;bottom:28px;flex-direction:column-reverse;align-items:stretch}
   .avisos .aviso{font-size:24px;padding:7px 18px;border-radius:24px;line-height:1.15}
   .avisos .aviso b{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom}
+
+  /* clarão do relâmpago por cima da cena (embaixo do placar) */
+  .clarao{position:absolute;inset:0;z-index:2;background:#e2e8ff;opacity:0;pointer-events:none}
+  /* convite quando o céu está vazio */
+  .convite{position:absolute;left:0;right:0;top:760px;z-index:4;text-align:center;font-size:78px;line-height:1.15;color:#fff;
+    pointer-events:none;animation:convite 1.6s ease-in-out infinite}
+  .convite span{color:var(--ouro)}
+  .convite[hidden]{display:none}
+  @keyframes convite{50%{transform:translateY(-16px)}}
 </style>
 </head>
 <body>
 <div class="palco">
-  <canvas id="tela" width="1080" height="1920"></canvas>
+  <div class="clarao" id="clarao"></div>
   <header class="topo">
     <h1 class="titulo-jogo">CÉU DE <span>PIPAS</span></h1>
     <div class="sub txt-jogo">💬 COMENTE PARA SOLTAR A SUA PIPA</div>
@@ -72,6 +84,7 @@
     <div class="acao txt-jogo" id="destaqueAcao">CORTE UMA PIPA</div>
     <div class="combo txt-jogo" id="destaqueCombo">COMBO x2</div>
   </section>
+  <div class="convite txt-jogo" id="convite">COMENTE E SOLTE<br><span>A SUA PIPA! 🪁</span></div>
   <div class="avisos" id="avisos"></div>
 </div>
 <script type="module" src="game.js"></script>
