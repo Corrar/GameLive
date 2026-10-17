@@ -5,21 +5,19 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Cabo de Guerra</title>
 <link rel="stylesheet" href="../kit/kit.css">
+<script type="importmap">{ "imports": { "three": "../kit/vendor/three.module.min.js", "three/addons/": "../kit/vendor/addons/" } }</script>
 <style>
   .t0{--cor:var(--cor0)}.t1{--cor:var(--cor1)}
+  /* o estádio, os bonecos e a corda são 3D (canvas WebGL do kit, atrás); aqui só o placar em HTML */
+  .palco{background:#140a35}
+  .palco.transparente{background:transparent}
 
-  /* fundo "arena": céu noturno com holofotes; arquibancada e gramado são desenhados no canvas */
-  .cenario{position:absolute;inset:0;overflow:hidden;
-    background:radial-gradient(55% 22% at 50% 14%,rgba(160,120,255,.45),transparent 70%),
-      radial-gradient(70% 30% at 50% 100%,rgba(40,140,80,.35),transparent 70%),
-      linear-gradient(180deg,#140a35 0%,#2a1766 22%,#3a2185 34%,#1b1045 35.5%,#0c3a24 68%,#08261a 76%,#06140e 100%)}
-  .cenario i{position:absolute;top:-6%;width:300px;height:62%;filter:blur(8px);transform-origin:top center;
-    background:linear-gradient(180deg,rgba(255,250,220,.26),transparent 80%);animation:holofote 7s ease-in-out infinite alternate}
-  .cenario i:nth-child(1){left:2%;transform:rotate(18deg)}
-  .cenario i:nth-child(2){right:2%;transform:rotate(-18deg);animation-delay:-3.5s}
-  .cenario i:nth-child(3){left:38%;transform:rotate(4deg);opacity:.6;animation-delay:-1.7s}
-  @keyframes holofote{from{rotate:-6deg}to{rotate:6deg}}
-  .transparente .cenario{display:none}
+  /* sombras suaves atrás do placar (em cima) e do ranking (embaixo) para o texto ler bem */
+  .veu{position:absolute;left:0;right:0;pointer-events:none}
+  .veu.cima{top:0;height:720px;background:linear-gradient(180deg,rgba(14,6,40,.7),rgba(14,6,40,.42) 72%,transparent)}
+  .veu.baixo{bottom:0;height:640px;background:linear-gradient(0deg,rgba(6,24,14,.72),rgba(6,24,14,.35) 65%,transparent)}
+  .transparente .veu{display:none}
+  .clarao{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:15}
 
   /* topo: troféus e rodada */
   .topo{position:absolute;left:36px;right:36px;top:30px;display:flex;align-items:center;justify-content:space-between}
@@ -33,21 +31,29 @@
   .lado{min-width:0}
   .lado .nome{font-size:54px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:6px 10px 10px}
   .lado .gente{font-size:28px;color:rgba(255,255,255,.85);margin-top:-4px}
-  .lado .forca{font-size:190px;color:#fff;display:inline-block;margin-top:8px;font-variant-numeric:tabular-nums}
-  .lado .pct{font-size:84px;color:var(--cor);display:block;margin-top:2px;font-variant-numeric:tabular-nums}
-  .lado .combo{height:66px;margin-top:8px;font-size:58px;color:var(--ouro);opacity:0;transition:opacity .2s}
+  .lado .forca{font-size:176px;color:#fff;display:inline-block;margin-top:6px;font-variant-numeric:tabular-nums}
+  .lado .pct{font-size:76px;color:var(--cor);display:block;margin-top:0;font-variant-numeric:tabular-nums}
+  .lado .combo{height:60px;margin-top:6px;font-size:54px;color:var(--ouro);opacity:0;transition:opacity .2s}
   .lado .combo.on{opacity:1}
-  .vs{position:absolute;left:50%;top:400px;translate:-50% 0;font-size:64px;color:#ffd23f}
+  .vs{position:absolute;left:50%;top:390px;translate:-50% 0;font-size:64px;color:#ffd23f}
 
-  /* força x2: pílula dourada com contagem regressiva em cima do time */
-  .dobro{position:absolute;top:712px;width:340px;margin-left:-170px;display:flex;align-items:center;justify-content:center;gap:12px;
-    padding:8px 22px;border-radius:999px;background:linear-gradient(180deg,#fff2a8,#ffc21f 50%,#e08a00);
-    border:5px solid #fff;box-shadow:0 6px 0 rgba(0,0,0,.35),0 0 46px 10px rgba(255,200,40,.75);
-    font-family:var(--fonte-jogo);font-size:46px;line-height:1;color:var(--contorno);
+  /* força x2: pílula dourada com contagem regressiva no canto do time, embaixo do troféu (fora da torcida e dos números) */
+  .dobro{position:absolute;top:136px;display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:4px 18px;border-radius:999px;background:linear-gradient(180deg,#fff2a8,#ffc21f 50%,#e08a00);
+    border:4px solid #fff;box-shadow:0 5px 0 rgba(0,0,0,.35),0 0 30px 6px rgba(255,200,40,.65);
+    font-family:var(--fonte-jogo);font-size:34px;line-height:1;color:var(--contorno);
     opacity:0;scale:.6;transition:opacity .2s,scale .25s cubic-bezier(.2,1.5,.4,1)}
   .dobro.on{opacity:1;scale:1;animation:pulsa .45s ease-in-out infinite alternate}
-  .dobro b{font-size:62px;color:#fff;-webkit-text-stroke:.11em var(--contorno);paint-order:stroke fill;min-width:84px;text-align:right}
-  .dobro.d0{left:250px}.dobro.d1{left:830px}
+  .dobro b{font-size:44px;color:#fff;-webkit-text-stroke:.11em var(--contorno);paint-order:stroke fill;min-width:64px;text-align:right}
+  .dobro.d0{left:24px;transform-origin:left center}.dobro.d1{right:24px;transform-origin:right center}
+
+  /* placas "faltam N" presas às linhas de vitória (posição vem da cena 3D) */
+  .falta{position:absolute;left:0;top:0;font-size:34px;white-space:nowrap;color:var(--cor);will-change:transform}
+
+  /* textos dos comentários que sobem de cima de cada time */
+  .puxada{position:absolute;z-index:12;translate:-50% -50%;font-size:36px;white-space:nowrap;pointer-events:none;
+    animation:puxada 1.2s cubic-bezier(.2,.8,.3,1) forwards}
+  @keyframes puxada{0%{opacity:0;transform:scale(.5)}12%{opacity:1;transform:scale(1.1)}25%{transform:scale(1)}100%{opacity:0;transform:translateY(-130px)}}
 
   /* dica de comentário */
   .dica{position:absolute;left:30px;right:30px;top:1306px;text-align:center;font-size:44px;color:#fff}
@@ -76,13 +82,14 @@
   .aviso b{color:var(--cor)}
   .aviso .mais{color:#ffd23f}
 
-  .vencedor{top:300px}
+  /* sem o preenchimento "para trás" do kit: se o PC demorar a desenhar o quadro, a faixa já aparece (só sem o pulo) */
+  .vencedor{top:300px;animation-fill-mode:forwards}
 </style>
 </head>
 <body>
 <div class="palco">
-  <div class="cenario"><i></i><i></i><i></i></div>
-  <canvas id="cena" width="1080" height="1920"></canvas>
+  <div class="veu cima"></div>
+  <div class="veu baixo"></div>
 
   <div class="topo">
     <div class="trofeu t0">🏆<b class="txt-jogo" id="trofeu0">0</b></div>
@@ -104,6 +111,10 @@
   <div class="dobro d0" id="dobro0">🍩 x2 <b id="dobroS0">0s</b></div>
   <div class="dobro d1" id="dobro1">🍩 x2 <b id="dobroS1">0s</b></div>
 
+  <div class="falta txt-jogo t0" id="falta0"></div>
+  <div class="falta txt-jogo t1" id="falta1"></div>
+  <div id="textos"></div>
+
   <div class="dica txt-jogo" id="dica"></div>
   <div class="meio">
     <div class="presentes" id="presentes0"></div>
@@ -113,6 +124,7 @@
 
   <div class="ranking-box"><h3 class="titulo-jogo">🔥 Quem mais puxou</h3><ol class="ranking" id="ranking"></ol></div>
   <div class="avisos" id="avisos"></div>
+  <div class="clarao" id="clarao"></div>
 </div>
 <script type="module" src="game.js"></script>
 </body>
