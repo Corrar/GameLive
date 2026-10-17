@@ -1,0 +1,20 @@
+Imagens dos lados da Urna da Live
+=================================
+
+Coloque aqui a imagem de cada lado (jpg, png ou webp), por exemplo:
+  lado-a.jpg, lado-b.jpg   (ou 13.jpg, 22.jpg, qualquer nome)
+
+Depois aponte no config.json da urna (jogos/urna/config.json), no campo "imagem" do lado:
+  "imagem": "imagens/lado-a.jpg"
+
+O caminho é relativo à pasta do jogo (jogos/urna/). Também vale uma URL completa,
+desde que o site libere o acesso (CORS); se não liberar, a urna usa o retrato ilustrado.
+
+A imagem aparece no quadrado da foto na tela da urna (quando o número é digitado) e na
+bolinha ao lado do nome no placar. Ela é cortada para cobrir o quadrado sem distorcer:
+o rosto deve ficar no centro (as laterais são cortadas; o topo da cabeça é preservado).
+Imagem em formato paisagem com fundo branco funciona bem (ex.: 1024x683).
+
+Sem imagem (campo "imagem" vazio) ou se o arquivo não carregar, aparece um retrato
+ilustrado genérico (busto de terno e gravata na cor do lado). Não deixe o config
+apontando para um arquivo que não existe.

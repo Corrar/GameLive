@@ -2,21 +2,22 @@
   "titulo": "Votação da Live",
   "marca": "GAMELIVE",
   "fundo": "estudio",
+  "qualidade": "alta",
   "som": true,
   "rodada": { "segundos": 120, "pausa": 8 },
   "lados": [
     {
       "nome": "Lado A",
-      "numero": "10",
+      "numero": "13",
       "cor": "#2fe26a",
-      "imagem": "",
+      "imagem": "imagens/13.jpg",
       "presentes": [{ "presente": 5655, "votos": 1 }]
     },
     {
       "nome": "Lado B",
-      "numero": "20",
+      "numero": "22",
       "cor": "#ff3358",
-      "imagem": "",
+      "imagem": "imagens/22.jpg",
       "presentes": [{ "presente": "GG", "votos": 1 }]
     }
   ]

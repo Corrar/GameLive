@@ -1,21 +1,35 @@
 // Cena 3D da Urna da Live: sala com mesa de madeira, a urna eletrônica e a mão que digita o voto.
 // Unidade ≈ 10 cm (a urna tem 4,4 × 2,8, como a de verdade).
-import { THREE, criarCena, material, pele, caixa, malha, texturaCanvas, texturaMaterial, holofote,
+import { THREE, criarCena, material, caixa, malha, texturaCanvas, texturaMaterial, holofote,
   criarParticulas, curvas } from '../kit/cena3d.js';
 import { tocar } from '../kit/efeitos.js';
+import { criarMao } from './mao3d.js';
+import { desenharRetrato, desenharCobrindo, carregarImagem } from './retrato.js';
 
 const TECLAS = [['1', '2', '3'], ['4', '5', '6'], ['7', '8', '9'], [null, '0', null]];
 
+// número do lado só com dígitos (cabe nas caixas da tela e tem tecla para cada um)
+export function numeroDoLado(lado, i) {
+  const n = String(lado?.numero ?? '').replace(/\D/g, '').slice(0, 5);
+  return n || String(i + 1);
+}
+
 export function criarUrna3d(palco, cfg) {
   const lados = cfg.lados;
+  const numeros = lados.map(numeroDoLado);
   const transparente = cfg.fundo === 'transparente';
   const c3d = criarCena(palco, {
-    cfg, luz: 'estudio', fundo: transparente ? null : '#b85a1c', exposicao: .92,
-    camera: { pos: [0, 11.86, 13.52], alvo: [0, 1.76, -.9], fov: 30 },
-    sol: { pos: [-5, 14, 9], alcance: 8 }
+    cfg, luz: 'estudio', fundo: transparente ? null : '#b85a1c', exposicao: 1,
+    camera: { pos: [0, 12.6, 14.9], alvo: [0, 1.4, -1], fov: 30 },
+    // sol alto à esquerda e um pouco atrás: a urna faz sombra na mesa e a mão no teclado, para a frente
+    sol: { pos: [-6, 11, -3], alcance: 7 }
   });
   const { cena } = c3d;
-  c3d.sol.shadow.radius = 6;
+  // pouco preenchimento: o sol desenha as sombras (mão no teclado, urna na mesa) e o preto fica preto
+  c3d.sol.intensity = 3.3;
+  c3d.sol.shadow.radius = 5;
+  c3d.hemi.intensity = .2;
+  cena.environmentIntensity = .3;
   const particulas = criarParticulas(c3d, { max: 400 });
 
   /* ---------- sala ---------- */
@@ -25,10 +39,11 @@ export function criarUrna3d(palco, cfg) {
     fundo.position.set(0, 8, -9);
     cena.add(fundo);
     // luz quente de abajur na parede, atrás da urna
-    const abajur = new THREE.PointLight('#ffb35c', 60, 30, 1.6);
-    abajur.position.set(0, 6, -6);
+    // (alcance curto: esquenta a parede sem lavar a urna nem as sombras da mesa)
+    const abajur = new THREE.PointLight('#ffb35c', 30, 7.5, 1.6);
+    abajur.position.set(0, 6.5, -7.8);
     cena.add(abajur);
-    holofote(c3d, { pos: [-9, 16, 4], alvo: [0, 0, 0], cor: '#fff0d8', intensidade: 120, angulo: .32, cone: false });
+    holofote(c3d, { pos: [-9, 16, 4], alvo: [0, 0, 0], cor: '#fff0d8', intensidade: 40, angulo: .32, cone: false });
   }
   if (transparente) {
     const sombra = new THREE.Mesh(new THREE.PlaneGeometry(30, 20), new THREE.ShadowMaterial({ opacity: .35 }));
@@ -95,7 +110,7 @@ export function criarUrna3d(palco, cfg) {
   const TELA_W = 1024, TELA_H = 740;
   const tela = texturaCanvas(TELA_W, TELA_H, () => {});
   const vidro = new THREE.Mesh(new THREE.PlaneGeometry(2.08, 1.5), new THREE.MeshPhysicalMaterial({
-    map: tela.textura, emissiveMap: tela.textura, emissive: '#ffffff', emissiveIntensity: .22,
+    map: tela.textura, emissiveMap: tela.textura, emissive: '#ffffff', emissiveIntensity: .16,
     roughness: .18, clearcoat: 1, clearcoatRoughness: .05
   }));
   vidro.rotation.x = -Math.PI / 2;
@@ -104,7 +119,7 @@ export function criarUrna3d(palco, cfg) {
   tampo.add(vidro);
 
   // teclado: painel preto, placa da marca, 10 teclas e os 3 botões
-  const painel = malha(caixa(1.62, .06, 1.92, .05), material('#202022', { rugosidade: .45, verniz: .2 }));
+  const painel = malha(caixa(1.62, .06, 1.92, .05), material('#18181a', { rugosidade: .45, verniz: .2 }));
   painel.position.set(1.33, .01, .05);
   tampo.add(painel);
   const placa = texturaCanvas(512, 96, (ctx, w, h) => {
@@ -118,13 +133,15 @@ export function criarUrna3d(palco, cfg) {
   tampo.add(marca);
 
   const teclas = new Map();
-  const corTecla = material('#2a2a2d', { rugosidade: .38, verniz: .4 });
+  const corTecla = material('#232326', { rugosidade: .38, verniz: .4 });
   function rotuloTecla(texto, { cor = '#ffffff', fonte = 82, largura = 128, altura = 96 } = {}) {
     const t = texturaCanvas(largura, altura, (ctx, w, h) => {
       ctx.fillStyle = cor; ctx.font = `800 ${fonte}px "Baloo 2", Arial, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(texto, w / 2, h / 2 + fonte * .06, w - 8);
     });
-    return new THREE.MeshBasicMaterial({ map: t.textura, transparent: true, depthWrite: false });
+    // material com luz: a sombra da mão escurece o número da tecla
+    return new THREE.MeshStandardMaterial({ map: t.textura, transparent: true, depthWrite: false, roughness: .4,
+      emissive: '#ffffff', emissiveMap: t.textura, emissiveIntensity: .12 });
   }
   const geoTecla = caixa(.36, .11, .26, .045);
   TECLAS.forEach((linha, l) => linha.forEach((d, c) => {
@@ -134,38 +151,39 @@ export function criarUrna3d(palco, cfg) {
     const r = new THREE.Mesh(new THREE.PlaneGeometry(.26, .2), rotuloTecla(d));
     r.rotation.x = -Math.PI / 2;
     r.position.y = .058;
+    r.receiveShadow = true;
     k.add(r);
     k.userData.base = k.position.y;
+    k.userData.meia = .055;
     tampo.add(k);
     teclas.set(d, k);
   }));
   const BOTOES = [['BRANCO', '#f3f2ec', '#1b1b1b'], ['CORRIGE', '#f08a24', '#1b1b1b'], ['CONFIRMA', '#2fb24c', '#0f2a15']];
   BOTOES.forEach(([nome, cor, corTexto], i) => {
-    const b = malha(caixa(.46, .12, .32, .05), material(cor, { rugosidade: .4, verniz: .4 }));
+    const mat = material(cor, { rugosidade: .4, verniz: .4, emissivo: '#5dff7e', intensidadeEmissiva: 0 });
+    const b = malha(caixa(.46, .12, .32, .05), mat);
     b.position.set(.9 + i * .43, .1, .74);
     const r = new THREE.Mesh(new THREE.PlaneGeometry(.42, .14), rotuloTecla(nome, { cor: corTexto, fonte: 40, largura: 256, altura: 80 }));
     r.rotation.x = -Math.PI / 2;
     r.position.y = .063;
+    r.receiveShadow = true;
     b.add(r);
     b.userData.base = b.position.y;
+    b.userData.meia = .06;
+    b.userData.mat = mat;
     tampo.add(b);
     teclas.set(nome, b);
   });
 
   /* ---------- tela da urna (desenho 2D) ---------- */
   const fontePadrao = (peso, px) => `${peso} ${px}px Arial, "Helvetica Neue", sans-serif`;
-  const fotos = lados.map((lado) => {
-    if (!lado.imagem) return null;
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => { img.ok = true; };
-    img.src = lado.imagem;
-    return img;
-  });
+  // foto de cada lado: a "imagem" do config (repinta a tela quando ela chega) ou o retrato ilustrado
+  const fotos = lados.map((lado) => carregarImagem(lado.imagem, () => pintarTela(estadoTela)));
+  let cursorAceso = true;
 
   // estado: { modo: 'espera' | 'digitando' | 'fim', lado, digitos }
   function pintarTela({ modo = 'espera', lado = 0, digitos = 0 } = {}) {
-    const numero = String(lados[lado].numero ?? lado + 1);
+    const numero = numeros[lado];
     tela.atualizar((ctx, w, h) => {
       ctx.fillStyle = '#f6f7f2';
       ctx.fillRect(0, 0, w, h);
@@ -173,130 +191,162 @@ export function criarUrna3d(palco, cfg) {
         ctx.fillStyle = '#111';
         ctx.font = fontePadrao(800, 300);
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('FIM', w / 2, h / 2 - 20);
-        ctx.font = fontePadrao(700, 40);
-        ctx.fillStyle = '#444';
+        ctx.fillText('FIM', w / 2, h / 2 - 30);
+        ctx.font = fontePadrao(700, 56);
+        ctx.fillStyle = '#333';
         ctx.fillText('VOTOU', w / 2, h - 90);
         return;
       }
+      const completo = digitos >= numero.length;
       ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
       ctx.fillStyle = '#111';
-      ctx.font = fontePadrao(700, 40);
-      ctx.fillText('SEU VOTO PARA', 40, 70);
-      ctx.font = fontePadrao(800, 58);
-      ctx.fillText((cfg.titulo ?? 'VOTAÇÃO').toUpperCase(), 40, 140, 640);
-      ctx.font = fontePadrao(600, 46);
-      ctx.fillText('Número:', 40, 270);
+      ctx.font = fontePadrao(700, 36);
+      ctx.fillText('SEU VOTO PARA', 34, 54);
+      ctx.font = fontePadrao(800, 50);
+      ctx.fillText((cfg.titulo ?? 'VOTAÇÃO').toUpperCase(), 34, 108, 640);
+      // caixas grandes dos dígitos (o centro da animação: precisa ler até no celular);
+      // o tamanho não muda quando a foto aparece
+      ctx.font = fontePadrao(600, 38);
+      ctx.fillText('Número:', 34, 166);
+      const n = numero.length, espaco = 18;
+      const lb = Math.min(196, (650 - (n - 1) * espaco) / n), ab = Math.min(250, lb * 1.3);
       [...numero].forEach((d, k) => {
-        const x = 250 + k * 108, y = 196;
-        ctx.lineWidth = 6; ctx.strokeStyle = '#111';
-        ctx.strokeRect(x, y, 92, 120);
-        ctx.fillStyle = '#fff'; ctx.fillRect(x + 3, y + 3, 86, 114);
+        const x = 34 + k * (lb + espaco), y = 186;
+        ctx.fillStyle = '#fff'; ctx.fillRect(x, y, lb, ab);
+        ctx.lineWidth = 8; ctx.strokeStyle = '#111'; ctx.strokeRect(x, y, lb, ab);
         if (k < digitos) {
-          ctx.fillStyle = '#111'; ctx.font = fontePadrao(700, 100); ctx.textAlign = 'center';
-          ctx.fillText(d, x + 46, y + 95);
-          ctx.textAlign = 'left';
-        } else if (k === digitos && Math.floor(performance.now() / 450) % 2 === 0) {
-          ctx.fillStyle = '#111'; ctx.fillRect(x + 18, y + 98, 56, 8);
+          ctx.fillStyle = '#111'; ctx.font = fontePadrao(800, Math.round(ab * .86)); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(d, x + lb / 2, y + ab / 2 + ab * .05);
+          ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+        } else if (k === digitos && cursorAceso) {
+          ctx.fillStyle = '#111'; ctx.fillRect(x + lb * .16, y + ab - 40, lb * .68, 14);
         }
       });
-      if (digitos >= numero.length) {
+      if (completo) {
         ctx.fillStyle = '#111';
-        ctx.font = fontePadrao(600, 42);
-        ctx.fillText('Nome:', 40, 400);
-        ctx.font = fontePadrao(800, 54);
-        ctx.fillText(lados[lado].nome, 190, 402, 520);
-        // foto do lado (ou iniciais na cor do lado)
-        const fx = w - 290, fy = 40, fw = 240, fh = 300;
-        ctx.fillStyle = lados[lado].cor; ctx.fillRect(fx, fy, fw, fh);
-        if (fotos[lado]?.ok) ctx.drawImage(fotos[lado], fx, fy, fw, fh);
-        else {
-          ctx.fillStyle = '#fff'; ctx.font = fontePadrao(800, 120); ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-          ctx.fillText(lados[lado].nome.trim().split(/\s+/).map(p => p[0]).join('').slice(0, 2).toUpperCase(), fx + fw / 2, fy + fh / 2);
-          ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
-        }
-        ctx.lineWidth = 5; ctx.strokeStyle = '#111'; ctx.strokeRect(fx, fy, fw, fh);
+        ctx.font = fontePadrao(600, 38);
+        ctx.fillText('Nome:', 34, 520);
+        ctx.font = fontePadrao(800, 64);
+        ctx.fillText(lados[lado].nome, 158, 522, 560);
+        // foto do lado: imagem do config cobrindo o quadrado, ou o retrato ilustrado na cor do lado
+        const fx = w - 296, fy = 34, fw = 262, fh = 330;
+        ctx.fillStyle = '#fff'; ctx.fillRect(fx, fy, fw, fh);
+        if (fotos[lado]?.ok) desenharCobrindo(ctx, fotos[lado], fx, fy, fw, fh);
+        else desenharRetrato(ctx, fx, fy, fw, fh, { cor: lados[lado].cor, variante: lado });
+        ctx.lineWidth = 6; ctx.strokeStyle = '#111'; ctx.strokeRect(fx, fy, fw, fh);
       }
       ctx.fillStyle = '#111';
-      ctx.fillRect(30, h - 170, w - 60, 4);
-      ctx.font = fontePadrao(600, 34);
-      ctx.fillText('Aperte a tecla:', 40, h - 118);
-      ctx.fillText('VERDE para CONFIRMAR este voto', 80, h - 74);
-      ctx.fillText('LARANJA para REINICIAR este voto', 80, h - 30);
+      ctx.fillRect(30, h - 160, w - 60, 5);
+      ctx.font = fontePadrao(600, 32);
+      ctx.fillText('Aperte a tecla:', 34, h - 114);
+      ctx.fillText('VERDE para CONFIRMAR este voto', 70, h - 72);
+      ctx.fillText('LARANJA para REINICIAR este voto', 70, h - 30);
     });
   }
   let estadoTela = { modo: 'espera', lado: 0, digitos: 0 };
   const telaPara = (e) => { estadoTela = e; pintarTela(e); };
   telaPara(estadoTela);
-  // cursor piscando
-  let piscou = 0;
-  c3d.aoQuadro((dt) => { piscou += dt; if (piscou > .45 && estadoTela.modo !== 'fim') { piscou = 0; pintarTela(estadoTela); } });
+  // cursor piscando no relógio do jogo; só repinta quando ele muda e quando há cursor na tela
+  c3d.aoQuadro((dt, t) => {
+    const aceso = Math.floor(t / .45) % 2 === 0;
+    if (aceso === cursorAceso) return;
+    cursorAceso = aceso;
+    if (estadoTela.modo !== 'fim' && estadoTela.digitos < numeros[estadoTela.lado].length) pintarTela(estadoTela);
+  });
 
   /* ---------- a mão ---------- */
-  const mao = criarMao();
+  const mao = criarMao({ passo: c3d.qualidade.nome === 'baixa' ? .026 : .019 });
   cena.add(mao.raiz);
 
-  // posição da ponta do dedo: começa descansando ao lado do teclado
-  const ponta = new THREE.Vector3();
-  const alvoMundo = (obj, altura = 0) => {
-    const p = new THREE.Vector3();
-    obj.getWorldPosition(p);
-    // "para cima" do tampo inclinado
-    const n = new THREE.Vector3(0, 1, 0).applyQuaternion(tampo.getWorldQuaternion(new THREE.Quaternion()));
-    return p.addScaledVector(n, .07 + altura);
-  };
-  const descanso = () => alvoMundo(teclas.get('9'), .9).add(new THREE.Vector3(.9, 0, 1.2));
-  const alvo = descanso();
-  ponta.copy(alvo);
-  let respiro = 0;
+  // ponto na face de cima da tecla (posição de repouso dela), "altura" acima, na normal do tampo
+  const sobre = (tecla, altura = 0) => tampo.localToWorld(new THREE.Vector3(tecla.position.x,
+    tecla.userData.base + tecla.userData.meia + altura, tecla.position.z));
+  // descanso: mão apoiada na mesa, na frente e à direita da urna, com punho e manga no quadro
+  const DESCANSO = new THREE.Vector3(1.05, .012, 2.1);
+  const GIRO_DESCANSO = { x: .02, y: .55, z: .06 };
+  // digitando: mão um pouco tombada para o lado do indicador (a unha fica de frente para a câmera)
+  const GIRO_DIGITA = { x: -.06, y: .92, z: .4 };
+  const ponta = DESCANSO.clone();
+  Object.assign(mao.giro, GIRO_DESCANSO);
+  const dobra = { k: 0 };
+  let digitando = false;
   c3d.aoQuadro((dt, t) => {
-    respiro = Math.sin(t * 1.6) * .03;
-    mao.posicionar(ponta.x, ponta.y + respiro * (digitando ? .2 : 1), ponta.z);
+    // respiração leve só parada; digitando, a mão segue exatamente o alvo
+    const r = digitando ? 0 : Math.sin(t * 1.5) * .012;
+    mao.dobrar(dobra.k + (digitando ? 0 : Math.sin(t * 1.5 + 1) * .03));
+    mao.posicionar(ponta.x, ponta.y + Math.max(0, r), ponta.z);
   });
 
   const mover = (para, ms, curva = curvas.suave) => c3d.tween(ponta, { x: para.x, y: para.y, z: para.z }, ms, curva);
 
   async function apertar(tecla, rapido) {
-    const v = rapido ? .62 : 1;
-    const em = alvoMundo(tecla, .38);
-    // arco: sobe um pouco no meio do caminho entre uma tecla e outra
-    const meio = ponta.clone().lerp(em, .5);
-    meio.y += .35;
-    await mover(meio, 110 * v);
-    await mover(em, 120 * v, curvas.saida);
-    // aperta: o dedo desce, a tecla afunda, bipe
-    mao.dobrar(.22);
-    await mover(alvoMundo(tecla, -.035), 70 * v, curvas.entrada);
-    tecla.position.y = tecla.userData.base - .05;
-    tocar(tecla === teclas.get('CONFIRMA') ? 'urnaConfirma' : 'urnaTecla');
-    await c3d.esperar(60 * v);
-    tecla.position.y = tecla.userData.base;
-    mao.dobrar(0);
-    await mover(alvoMundo(tecla, .3), 90 * v, curvas.saida);
+    const v = rapido ? .65 : 1;
+    const acima = sobre(tecla, .3);
+    // arco: sobe no meio do caminho (pulo curto entre teclas vizinhas) e o indicador se estica antes de descer
+    const meio = ponta.clone().lerp(acima, .5);
+    meio.y = Math.max(ponta.y, acima.y) + Math.min(.3, .08 + ponta.distanceTo(acima) * .14);
+    c3d.tween(dobra, { k: -.25 }, 200 * v, curvas.suave);
+    await mover(meio, 130 * v, curvas.suave);
+    await mover(acima, 130 * v, curvas.saida);
+    await mover(sobre(tecla, 0), 90 * v, curvas.entrada);
+    // aperta: dedo e tecla descem juntos, o dedo dobra, bipe no fundo
+    const FUNDO = .05;
+    await Promise.all([
+      mover(sobre(tecla, -FUNDO), 70 * v, curvas.saida),
+      c3d.tween(tecla.position, { y: tecla.userData.base - FUNDO }, 70 * v, curvas.saida),
+      c3d.tween(dobra, { k: .25 }, 70 * v, curvas.saida)
+    ]);
+    const confirma = tecla === teclas.get('CONFIRMA');
+    tocar(confirma ? 'urnaConfirma' : 'urnaTecla');
+    if (confirma) {
+      tecla.userData.mat.emissiveIntensity = .9;
+      c3d.tween(tecla.userData.mat, { emissiveIntensity: 0 }, 650, curvas.entrada);
+    }
+    await c3d.esperar(130 * v);
+    await Promise.all([
+      mover(sobre(tecla, 0), 80 * v, curvas.suave),
+      c3d.tween(tecla.position, { y: tecla.userData.base }, 80 * v, curvas.suave),
+      c3d.tween(dobra, { k: 0 }, 80 * v, curvas.suave)
+    ]);
+    await mover(sobre(tecla, .28), 100 * v, curvas.saida);
   }
 
-  let pendentes = [], digitando = false;
+  let pendentes = [];
   async function digitar() {
     if (digitando) return;
     digitando = true;
-    while (pendentes.length) {
-      const lado = pendentes.shift();
-      const rapido = pendentes.length > 0;
-      const numero = String(lados[lado].numero ?? lado + 1);
-      telaPara({ modo: 'digitando', lado, digitos: 0 });
-      for (let k = 0; k < numero.length; k++) {
-        await apertar(teclas.get(numero[k]), rapido);
-        telaPara({ modo: 'digitando', lado, digitos: k + 1 });
+    try {
+      while (pendentes.length) {
+        // sai do descanso: a mão vira para o teclado enquanto vai até a primeira tecla
+        c3d.tween(mao.giro, GIRO_DIGITA, 420, curvas.suave);
+        while (pendentes.length) {
+          const lado = pendentes.shift();
+          const rapido = pendentes.length > 0;
+          const numero = numeros[lado];
+          telaPara({ modo: 'digitando', lado, digitos: 0 });
+          for (let k = 0; k < numero.length; k++) {
+            const tecla = teclas.get(numero[k]);
+            if (tecla) await apertar(tecla, rapido);
+            telaPara({ modo: 'digitando', lado, digitos: k + 1 });
+          }
+          await c3d.esperar(rapido ? 140 : 280);
+          await apertar(teclas.get('CONFIRMA'), rapido);
+          telaPara({ modo: 'fim', lado, digitos: numero.length });
+          particulas.explodir(sobre(teclas.get('CONFIRMA'), .15), { qtd: 22, forca: 3, tamanho: .08, cores: [lados[lado].cor, '#ffffff', '#ffd23f'] });
+          // espera o trinado de confirmação (0,88 s) acabar antes do próximo voto
+          await c3d.esperar(900);
+          telaPara({ modo: 'espera', lado, digitos: 0 });
+        }
+        // volta a descansar na mesa (se chegar voto no caminho, já volta para o teclado)
+        const meio = ponta.clone().lerp(DESCANSO, .5);
+        meio.y = ponta.y + .2;
+        c3d.tween(mao.giro, GIRO_DESCANSO, 640, curvas.suave);
+        await mover(meio, 300, curvas.suave);
+        if (!pendentes.length) await mover(DESCANSO, 340, curvas.saida);
       }
-      await c3d.esperar(rapido ? 120 : 260);
-      await apertar(teclas.get('CONFIRMA'), rapido);
-      telaPara({ modo: 'fim', lado, digitos: numero.length });
-      particulas.explodir(alvoMundo(teclas.get('CONFIRMA'), .2), { qtd: 22, forca: 3, tamanho: .08, cores: [lados[lado].cor, '#ffffff', '#ffd23f'] });
-      await c3d.esperar(rapido ? 450 : 900);
-      telaPara({ modo: 'espera', lado, digitos: 0 });
+    } finally {
+      digitando = false;
     }
-    await mover(descanso(), 420, curvas.suave);
-    digitando = false;
   }
 
   return {
@@ -309,121 +359,4 @@ export function criarUrna3d(palco, cfg) {
     },
     projetarUrna: () => c3d.projetar(new THREE.Vector3(0, 1, 0))
   };
-
-  /* ---------- modelagem da mão direita, palma para baixo, indicador esticado ---------- */
-  function criarMao() {
-    const raiz = new THREE.Group();     // posicionada de modo que a ponta do indicador caia no alvo
-    const mao = new THREE.Group();      // orientação do braço
-    raiz.add(mao);
-    const mPele = pele('#cf946c');
-    const mUnha = material('#f3d6cb', { rugosidade: .25, verniz: .8 });
-    const tecido = texturaMaterial('tecido', { cor: '#454b55', repetir: [3, 6] });
-    const mManga = material('#ffffff', { mapa: tecido.mapa, relevo: tecido.relevo, escalaRelevo: .02, rugosidade: .88 });
-    const mPunho = material('#f4f4f0', { rugosidade: .75 });
-    const mAbotoadura = material('#d8b24a', { rugosidade: .25, metal: 1 });
-
-    // eixo do braço: os dedos apontam para -z; o pulso fica em z = 0
-    const palma = malha(caixa(.86, .3, 1.02, .14), mPele);
-    palma.position.set(0, 0, -.5);
-    palma.scale.set(1, 1, 1);
-    mao.add(palma);
-    const dorso = malha(new THREE.SphereGeometry(.47, 24, 16), mPele);
-    dorso.scale.set(.92, .34, 1.08);
-    dorso.position.set(0, .06, -.45);
-    mao.add(dorso);
-    // nós dos dedos
-    const nos = [-.29, -.1, .1, .29];
-    for (const x of nos) {
-      const n = malha(new THREE.SphereGeometry(.1, 16, 12), mPele);
-      n.position.set(x, .04, -.98);
-      n.scale.set(1, .85, 1);
-      mao.add(n);
-    }
-    // dedo = cadeia de falanges com juntas (rotação em x dobra para baixo)
-    function dedo(x, comprimentos, raio, dobras, y = 0) {
-      let pai = new THREE.Group();
-      pai.position.set(x, y, -1.0);
-      mao.add(pai);
-      const juntas = [];
-      comprimentos.forEach((c, i) => {
-        const j = i === 0 ? pai : new THREE.Group();
-        if (i > 0) { j.position.set(0, 0, -comprimentos[i - 1]); pai.add(j); }
-        j.rotation.x = dobras[i];
-        const r = raio * (1 - i * .08);
-        const f = malha(new THREE.CapsuleGeometry(r, Math.max(.01, c - r), 6, 14), mPele);
-        f.rotation.x = Math.PI / 2;
-        f.position.z = -c / 2;
-        j.add(f);
-        if (i > 0) { const dobra = malha(new THREE.SphereGeometry(r * 1.02, 12, 10), mPele); j.add(dobra); }
-        juntas.push(j);
-        pai = j;
-      });
-      return juntas;
-    }
-    // indicador esticado (ligeiramente para baixo), demais dedos fechados
-    const indicador = dedo(-.29, [.46, .29, .24], .092, [-.5, -.28, -.16]);
-    const unha = malha(new THREE.SphereGeometry(.07, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mUnha);
-    unha.scale.set(1, .35, 1.25);
-    unha.position.set(0, .055, -.15);
-    indicador[2].add(unha);
-    const ponteira = new THREE.Object3D();
-    ponteira.position.set(0, -.03, -.28);
-    indicador[2].add(ponteira);
-    dedo(-.1, [.42, .28, .22], .094, [-1.3, -1.6, -1.0]);
-    dedo(.1, [.4, .26, .21], .09, [-1.35, -1.6, -1.0]);
-    dedo(.29, [.32, .22, .18], .08, [-1.4, -1.55, -1.0]);
-    // polegar: sai da lateral da palma e encosta no médio
-    const polegarBase = new THREE.Group();
-    polegarBase.position.set(-.43, -.08, -.35);
-    polegarBase.rotation.set(-.2, .75, .5);
-    mao.add(polegarBase);
-    const p1 = malha(new THREE.CapsuleGeometry(.11, .3, 6, 14), mPele);
-    p1.rotation.x = Math.PI / 2; p1.position.z = -.2;
-    polegarBase.add(p1);
-    const polegarPonta = new THREE.Group();
-    polegarPonta.position.z = -.4;
-    polegarPonta.rotation.set(-.25, .55, 0);
-    polegarBase.add(polegarPonta);
-    const p2 = malha(new THREE.CapsuleGeometry(.1, .2, 6, 14), mPele);
-    p2.rotation.x = Math.PI / 2; p2.position.z = -.14;
-    polegarPonta.add(p2);
-    const unhaP = malha(new THREE.SphereGeometry(.075, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), mUnha);
-    unhaP.scale.set(1, .35, 1.2); unhaP.position.set(0, .07, -.18);
-    polegarPonta.add(unhaP);
-    // pulso, punho da camisa com abotoadura e manga do paletó
-    const pulso = malha(new THREE.CylinderGeometry(.27, .3, .5, 24), mPele);
-    pulso.rotation.x = Math.PI / 2; pulso.position.z = .12; pulso.scale.set(1.15, 1, .78);
-    mao.add(pulso);
-    const punho = malha(new THREE.CylinderGeometry(.36, .37, .36, 28), mPunho);
-    punho.rotation.x = Math.PI / 2; punho.position.z = .48; punho.scale.set(1.1, 1, .85);
-    mao.add(punho);
-    const abotoadura = malha(new THREE.SphereGeometry(.05, 12, 8), mAbotoadura);
-    abotoadura.position.set(-.38, .05, .5);
-    mao.add(abotoadura);
-    const manga = malha(new THREE.CylinderGeometry(.43, .52, 5, 28, 1, true), mManga);
-    manga.rotation.x = Math.PI / 2; manga.position.z = 3.1; manga.scale.set(1.08, 1, .9);
-    mao.add(manga);
-
-    // braço vem de baixo à direita, da frente da urna; dedos apontando para o teclado e para baixo
-    mao.rotation.order = 'YXZ';
-    mao.rotation.set(-.25, .62, -.28);
-    const tmp = new THREE.Vector3();
-    return {
-      raiz,
-      // coloca a raiz para a ponta do indicador ficar em (x, y, z)
-      posicionar(x, y, z) {
-        raiz.updateMatrixWorld(true);
-        ponteira.getWorldPosition(tmp);
-        raiz.position.x += x - tmp.x;
-        raiz.position.y += y - tmp.y;
-        raiz.position.z += z - tmp.z;
-      },
-      // dobra extra do indicador e do pulso ao apertar (0 = solto)
-      dobrar(k) {
-        indicador[1].rotation.x = -.28 - k * .5;
-        indicador[2].rotation.x = -.16 - k * .3;
-        mao.rotation.x = -.25 - k * .25;
-      }
-    };
-  }
 }

@@ -1,9 +1,10 @@
 import { conectar, carregarConfig, escalarPalco, ehPresente, avisos, html,
   guardar, lembrar, teclas, eventoFalso } from '../kit/kit.js';
-import { criarCombo, criarRanking, emojiDoPresente, formatarTempo, avatar, animar, contador,
+import { criarCombo, criarRanking, emojiDoPresente, formatarTempo, avatar, animar,
   particulas, flutuar, tremer, confete, cronometro, pintarRanking, ligarSom, tocar } from '../kit/efeitos.js';
 import { fontesProntas } from '../kit/cena3d.js';
-import { criarUrna3d } from './urna3d.js';
+import { criarUrna3d, numeroDoLado } from './urna3d.js';
+import { retratoCanvas } from './retrato.js';
 
 const cfg = await carregarConfig();
 const lados = cfg.lados;
@@ -27,7 +28,15 @@ $('titulo').textContent = cfg.titulo ?? '';
 
 // presentes de cada lado: emoji + "+N VOTOS"
 lados.forEach((lado, i) => {
-  $('nome' + i).textContent = lado.nome;
+  // nome com a foto do lado (a mesma da tela da urna: imagem do config ou retrato ilustrado)
+  const foto = document.createElement('img');
+  foto.className = 'retrato';
+  foto.alt = '';
+  const generico = () => { foto.onerror = null; foto.src = retratoCanvas(lado.cor, i, 160, 200).toDataURL(); };
+  if (lado.imagem) { foto.onerror = generico; foto.src = lado.imagem; } else generico();
+  const nome = document.createElement('span');
+  nome.textContent = lado.nome;
+  $('nome' + i).replaceChildren(foto, nome);
   for (const p of lado.presentes.slice(0, 2)) {
     const chip = document.createElement('div');
     chip.className = 'chip-presente';
@@ -53,8 +62,27 @@ const salvar = () => guardar('urna', { votos, trofeus });
 const avisar = avisos($('avisos'), { max: 3 });
 const combo = criarCombo({ janela: 4000 });
 const ranking = criarRanking();
-const contadores = [contador($('votos0')), contador($('votos1'))];
+const contadores = [contadorVotos($('votos0')), contadorVotos($('votos1'))];
 const timerCombo = [0, 0];
+
+// contador do placar: mede o tempo com performance.now() dentro do quadro (o timestamp do rAF pode vir
+// antes do início com quadros lentos, e a curva extrapolava para votos negativos)
+function contadorVotos(el, duracao = 450) {
+  let atual = 0, raf = 0;
+  el.textContent = '0';
+  return function para(valor, pular = true) {
+    const de = atual, inicio = performance.now();
+    cancelAnimationFrame(raf);
+    const passo = () => {
+      const k = Math.min(1, Math.max(0, (performance.now() - inicio) / duracao));
+      atual = Math.round(de + (valor - de) * (1 - (1 - k) ** 3));
+      el.textContent = Math.max(0, atual).toLocaleString('pt-BR');
+      if (k < 1) raf = requestAnimationFrame(passo);
+    };
+    raf = requestAnimationFrame(passo);
+    if (pular && valor !== de) animar(el);
+  };
+}
 
 function lider() {
   if (votos[0] === votos[1]) return -1;
@@ -84,9 +112,10 @@ function mostrarCombo(i, n, ganho) {
   animar(el);
   clearTimeout(timerCombo[i]);
   timerCombo[i] = setTimeout(() => el.classList.remove('on'), 4000);
-  tocar('combo', n);
-  // passou de um marco (10, 25, 50...): explosão e tremida
+  // passou de um marco (10, 25, 50...): explosão, tremida e o som de combo
+  // (fora dos marcos, quem faz barulho é a urna: bipe em cada tecla e o trinado do CONFIRMA)
   if (MARCOS.some(m => n - ganho < m && n >= m)) {
+    tocar('combo', n);
     particulas(palco, { ...CENTRO[i], qtd: 30, forca: 1.4, cores: [lados[i].cor, '#ffd23f', '#fff'] });
     tremer(palco, true);
   }
@@ -100,7 +129,7 @@ function mostrarUltimo(ev, i) {
   nome.textContent = ev.nome || ev.user;
   const votou = document.createElement('span');
   votou.className = 'votou txt-jogo';
-  votou.textContent = `votou ${lados[i].numero ?? ''} · ${lados[i].nome}`;
+  votou.textContent = `votou ${numeroDoLado(lados[i], i)} · ${lados[i].nome}`;
   u.replaceChildren(avatar(ev), nome, votou);
   animar(u);
 }
@@ -183,12 +212,11 @@ function aoEvento(ev) {
     flutuar(palco, { x: CENTRO[i].x, y: CENTRO[i].y - 150, texto: `+${n}`, cor: lado.cor, tamanho: 110 });
     particulas(palco, { x: CENTRO[i].x, y: 780, qtd: Math.min(8 + n * 2, 30), emoji: null, cores: [lado.cor, '#fff', '#ffd23f'] });
     particulas(palco, { x: i ? 900 : 180, y: 870, qtd: Math.min(n, 6), emoji: regra.emoji ?? emojiDoPresente(ev.presenteNome), forca: .8 });
-    tocar('ponto');
     mostrarCombo(i, combo.registrar(i, n), n);
     mostrarUltimo(ev, i);
 
     ranking.somar(ev, n, { cor: lado.cor });
-    pintarRanking($('ranking'), ranking.top(5), { destaque: ev.user });
+    pintarRanking($('ranking'), ranking.top(4), { destaque: ev.user });
     avisar(html`<span class="l${i}"><b>${ev.nome || ev.user}</b> ${ev.quantidade}× ${ev.presenteNome} <span class="mais">+${n}</span></span>`);
 
     urna.votar(i);
