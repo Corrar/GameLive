@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GameLive — jogos que o chat da sua live joga</title>
+<meta name="description" content="Jogos interativos para TikTok LIVE: cada comentário e presente da audiência vira ação dentro do jogo, ao vivo.">
+<meta name="theme-color" content="#0b0d17">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<meta property="og:title" content="GameLive — comentou, aconteceu.">
+<meta property="og:description" content="Jogos interativos para TikTok LIVE: o chat joga com você.">
+<style>
+  :root{--fundo:#0b0d17;--cartao:#151a2c;--borda:#232a44;--texto:#eef1fa;--suave:#9aa3bd;--menta:#3df2c2;--rosa:#ff3d7f}
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--fundo);color:var(--texto);font:17px/1.6 "Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  .cont{max-width:1120px;margin:0 auto;padding:0 20px}
+  .grad{background:linear-gradient(90deg,var(--menta),var(--rosa));-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  header{position:sticky;top:0;z-index:5;background:rgba(11,13,23,.82);backdrop-filter:blur(10px);border-bottom:1px solid rgba(255,255,255,.06)}
+  header .cont{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .marca{display:flex;align-items:center;gap:10px;font-weight:900;font-size:20px;text-decoration:none;letter-spacing:-.01em}
+  .marca img{width:32px;height:32px}
+  nav{display:flex;gap:22px;font-size:15px}
+  nav a{text-decoration:none;color:var(--suave)}
+  nav a:hover,nav a:focus-visible{color:var(--texto)}
+
+  .hero{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;padding-top:64px;padding-bottom:56px}
+  .selo{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:rgba(255,61,127,.12);color:#ffb3cb;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+  .selo::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--rosa);animation:pisca 1.6s ease-in-out infinite}
+  @keyframes pisca{50%{opacity:.25}}
+  h1{font-size:clamp(40px,6vw,68px);line-height:1.02;letter-spacing:-.035em;margin:18px 0 18px;font-weight:900}
+  .lead{font-size:clamp(17px,2vw,20px);color:var(--suave);max-width:34em;margin:0 0 28px}
+  .acoes{display:flex;flex-wrap:wrap;gap:12px}
+  .botao{display:inline-flex;align-items:center;gap:8px;padding:13px 22px;border-radius:14px;font-weight:800;text-decoration:none;border:1px solid var(--borda);background:var(--cartao)}
+  .botao.primario{background:var(--menta);color:#06231b;border-color:var(--menta)}
+  .botao:hover,.botao:focus-visible{outline:none;border-color:var(--menta)}
+  .botao.primario:hover,.botao.primario:focus-visible{filter:brightness(1.08)}
+  .numeros{display:flex;gap:28px;margin-top:34px;color:var(--suave);font-size:14px}
+  .numeros b{display:block;color:var(--texto);font-size:26px;line-height:1.1}
+
+  .vitrine{display:flex;flex-direction:column;align-items:center;gap:16px}
+  .celular{position:relative;width:min(340px,100%);aspect-ratio:9/16;border-radius:38px;padding:10px;background:#05060c;
+    box-shadow:0 0 0 2px #232a44,0 40px 80px -30px rgba(61,242,194,.35),0 30px 70px -20px rgba(255,61,127,.3)}
+  .celular iframe{width:100%;height:100%;border:0;border-radius:29px;background:var(--fundo);display:block}
+  .chips{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-width:420px}
+  .chip{font:inherit;font-size:14px;font-weight:700;padding:7px 12px;border-radius:999px;border:1px solid var(--borda);background:var(--cartao);color:var(--suave);cursor:pointer}
+  .chip:hover,.chip:focus-visible{color:var(--texto);outline:none;border-color:#3a4570}
+  .chip[aria-pressed="true"]{color:#06231b;background:var(--menta);border-color:var(--menta)}
+  .legenda{font-size:13px;color:var(--suave);text-align:center;margin:0}
+  .legenda a{color:var(--menta)}
+
+  section{padding:64px 0;border-top:1px solid rgba(255,255,255,.06)}
+  h2{font-size:clamp(28px,3.4vw,40px);letter-spacing:-.025em;line-height:1.1;margin:0 0 10px}
+  .sub{color:var(--suave);margin:0 0 32px;max-width:40em}
+
+  .passos{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;counter-reset:passo}
+  .passo{padding:24px;border-radius:18px;background:var(--cartao);border:1px solid var(--borda)}
+  .passo::before{counter-increment:passo;content:counter(passo);display:grid;place-items:center;width:36px;height:36px;border-radius:10px;
+    background:linear-gradient(135deg,var(--menta),var(--rosa));color:#0b0d17;font-weight:900;margin-bottom:14px}
+  .passo h3{margin:0 0 6px;font-size:19px}
+  .passo p{margin:0;color:var(--suave);font-size:15px}
+
+  .jogos{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+  .jogo{display:flex;flex-direction:column;padding:22px;border-radius:18px;background:var(--cartao);border:1px solid var(--borda);text-decoration:none;transition:border-color .2s,transform .2s}
+  .jogo:hover,.jogo:focus-visible{border-color:var(--menta);transform:translateY(-3px);outline:none}
+  .jogo .emoji{font-size:34px;line-height:1}
+  .jogo h3{margin:12px 0 4px;font-size:19px}
+  .jogo p{margin:0 0 14px;color:var(--suave);font-size:15px;flex:1}
+  .jogo .ir{font-size:14px;font-weight:800;color:var(--menta)}
+
+  pre{margin:0;padding:22px;border-radius:18px;background:#070912;border:1px solid var(--borda);overflow-x:auto;font:14px/1.7 ui-monospace,Consolas,monospace;color:#cfd6ea}
+  pre .c{color:#68728f}
+  .duas{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:start}
+  .hero>*,.duas>*{min-width:0}
+  .duas ul{margin:0;padding-left:20px;color:var(--suave)}
+  .duas li{margin-bottom:10px}
+  .duas li b{color:var(--texto)}
+  code{font:.9em ui-monospace,Consolas,monospace;background:var(--cartao);padding:2px 6px;border-radius:6px;color:var(--texto)}
+
+  .avisos{color:var(--suave);font-size:14px}
+  .avisos p{margin:0 0 10px}
+  footer{padding:36px 0 48px;color:var(--suave);font-size:14px;text-align:center;border-top:1px solid rgba(255,255,255,.06)}
+  footer img{width:28px;height:28px;display:block;margin:0 auto 8px}
+
+  @media (max-width:860px){
+    .hero{grid-template-columns:1fr;padding-top:40px}
+    .passos,.duas{grid-template-columns:1fr}
+    nav{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="cont">
+    <a class="marca" href="#"><img src="assets/logo.svg" alt="">GameLive</a>
+    <nav aria-label="Seções">
+      <a href="#como">Como funciona</a>
+      <a href="#jogos">Jogos</a>
+      <a href="#comecar">Começar</a>
+      <a href="https://github.com/Corrar/GameLive">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <div class="cont hero">
+    <div>
+      <span class="selo">Para TikTok LIVE</span>
+      <h1>Comentou,<br><span class="grad">aconteceu.</span></h1>
+      <p class="lead">Jogos que o chat da sua live joga com você. Cada comentário vira jogada, cada presente vira evento, e quem assiste aparece na tela.</p>
+      <div class="acoes">
+        <a class="botao primario" href="#jogos">Ver os 8 jogos</a>
+        <a class="botao" href="#comecar">Usar na minha live</a>
+      </div>
+      <div class="numeros">
+        <span><b>8</b>jogos prontos</span>
+        <span><b>9:16</b>pronto para OBS</span>
+        <span><b>0</b>build, só HTML5</span>
+      </div>
+    </div>
+
+    <div class="vitrine">
+      <div class="celular"><iframe id="tela" title="Demonstração do jogo" src="jogos/urna/?demo" loading="lazy"></iframe></div>
+      <div class="chips" id="chips" role="group" aria-label="Escolher jogo da demonstração"></div>
+      <p class="legenda">Eventos simulados no navegador. <a id="cheia" href="jogos/urna/?demo">Abrir em tela cheia</a></p>
+    </div>
+  </div>
+
+  <section id="como">
+    <div class="cont">
+      <h2>Como funciona</h2>
+      <p class="sub">Uma ponte no seu computador escuta a live e entrega cada comentário e presente ao jogo aberto no navegador. Você só captura a tela.</p>
+      <div class="passos">
+        <div class="passo"><h3>Conecte o seu @</h3><p>Rode a ponte com o seu usuário. Ela reconecta sozinha se a live cair e conta presentes em sequência sem duplicar.</p></div>
+        <div class="passo"><h3>Abra um jogo</h3><p>Cada jogo é uma página 1080×1920. Nomes, cores e quais presentes fazem o quê ficam num <code>config.json</code>.</p></div>
+        <div class="passo"><h3>Capture e jogue</h3><p>Fonte <em>Navegador</em> no OBS ou captura de janela no LIVE Studio. A partir daí, quem joga é o chat.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="jogos">
+    <div class="cont">
+      <h2>Os jogos</h2>
+      <p class="sub">Clique para abrir a demonstração. Em qualquer jogo, a tecla <code>T</code> dispara um evento de teste.</p>
+      <div class="jogos" id="lista"></div>
+    </div>
+  </section>
+
+  <section id="comecar">
+    <div class="cont duas">
+      <div>
+        <h2>Usar na sua live</h2>
+        <p class="sub">Precisa de Node.js 20 ou mais novo, rodando no mesmo computador da transmissão.</p>
+<pre><span class="c"># baixar e instalar</span>
+git clone https://github.com/Corrar/GameLive
+cd GameLive
+npm install
+
+<span class="c"># testar sem live (eventos falsos)</span>
+npm run simular
+
+<span class="c"># conectar na sua live</span>
+npm start -- @seu_usuario</pre>
+      </div>
+      <div>
+        <h2>Na transmissão</h2>
+        <ul>
+          <li>Abra <code>http://localhost:3000/jogos/</code> e escolha um jogo.</li>
+          <li><b>OBS:</b> fonte <em>Navegador</em> com a URL do jogo, largura <code>1080</code>, altura <code>1920</code>.</li>
+          <li><b>TikTok LIVE Studio:</b> captura de <em>Janela</em> do navegador com o jogo aberto.</li>
+          <li>Os IDs dos presentes da sua região aparecem em <code>presentes-vistos.json</code> assim que alguém manda um.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="avisos">
+    <div class="cont">
+      <p>O TikTok não tem API oficial para eventos de live: a ponte usa uma biblioteca comunitária que pode parar de funcionar quando o TikTok mudar algo.</p>
+      <p>Temas políticos em lives com presentes podem violar as regras de monetização do TikTok e, em período eleitoral, a vedação a enquetes do TSE. Os lados de cada jogo são configuráveis para que essa escolha seja do streamer.</p>
+      <p>GameLive não tem vínculo com TikTok, OBS ou qualquer outra marca citada.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <img src="assets/logo.svg" alt="">
+  feito para lives que querem a audiência jogando junto
+</footer>
+
+<script>
+  const JOGOS = [
+    ['urna', '🗳️', 'Urna da Live', 'Presente vira voto: placar gigante, combos, urna eletrônica e ranking de quem mais mandou.'],
+    ['corrida', '🏎️', 'Corrida do Chat', 'Quem comenta entra na pista; presentes viram nitro e óleo.'],
+    ['cabo', '🪢', 'Cabo de Guerra', 'Comente o seu time e puxe a corda; presente puxa mais forte.'],
+    ['torre', '🗼', 'Torre Alta', 'Presentes constroem e derrubam a torre.'],
+    ['torres-rivais', '🏰', 'Torres Rivais', 'Dois times, duas torres, quem chega primeiro na meta.'],
+    ['voo', '🐦', 'Voo da Live', 'O pássaro voa sozinho e o chat tenta derrubar.'],
+    ['pipas', '🪁', 'Céu de Pipas', 'Cada comentário é uma pipa; presente corta a linha do rival.'],
+    ['briga', '🥊', 'Briga da Live', 'Escolha o lutador; presentes viram golpes.']
+  ];
+  const url = (pasta) => `jogos/${pasta}/?demo`;
+  const tela = document.getElementById('tela');
+  const cheia = document.getElementById('cheia');
+  const chips = document.getElementById('chips');
+  const lista = document.getElementById('lista');
+
+  function mostrar(pasta) {
+    tela.src = url(pasta);
+    cheia.href = url(pasta);
+    for (const c of chips.children) c.setAttribute('aria-pressed', String(c.dataset.pasta === pasta));
+  }
+
+  for (const [pasta, emoji, nome, texto] of JOGOS) {
+    const chip = document.createElement('button');
+    chip.className = 'chip';
+    chip.type = 'button';
+    chip.dataset.pasta = pasta;
+    chip.textContent = `${emoji} ${nome}`;
+    chip.setAttribute('aria-pressed', String(pasta === 'urna'));
+    chip.addEventListener('click', () => mostrar(pasta));
+    chips.appendChild(chip);
+
+    const a = document.createElement('a');
+    a.className = 'jogo';
+    a.href = url(pasta);
+    a.innerHTML = '<span class="emoji" aria-hidden="true"></span><h3></h3><p></p><span class="ir">Abrir demonstração →</span>';
+    a.querySelector('.emoji').textContent = emoji;
+    a.querySelector('h3').textContent = nome;
+    a.querySelector('p').textContent = texto;
+    lista.appendChild(a);
+  }
+</script>
+</body>
+</html>

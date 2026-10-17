@@ -1,11 +1,21 @@
 import { conectar, carregarConfig, aplicarFundo, escalarPalco, acaoDoPresente, criarTimes, avisos, html,
   guardar, lembrar, teclas, eventoFalso } from '../kit/kit.js';
+import { criarCombo, criarRanking, emojiDoPresente, avatar, animar, particulas, flutuar, tremer,
+  pintarRanking, ligarSom, tocar } from '../kit/efeitos.js';
+import { fontesProntas } from '../kit/cena3d.js';
+import { criarArena3d } from './arena3d.js';
 
 const cfg = await carregarConfig();
 const $ = (id) => document.getElementById(id);
 const palco = document.querySelector('.palco');
-aplicarFundo(cfg.fundo);
+// "arena" monta o estádio 3D; "transparente" (sobrepor na câmera) ou outra cor ficam só com o jogo
+const ARENA_FUNDO = (cfg.fundo ?? 'arena') === 'arena';
+aplicarFundo(ARENA_FUNDO ? '#140a35' : cfg.fundo);
+if (!ARENA_FUNDO) palco.classList.add('transparente');
 escalarPalco(palco);
+ligarSom(cfg.som);
+await fontesProntas();
+const arena = criarArena3d(palco, cfg);
 
 const TIMES = cfg.times;
 const LIMITE = cfg.limite ?? 100;
@@ -13,58 +23,146 @@ const FORCA = cfg.forca ?? {};
 const DOBRO_MS = (cfg.dobroSegundos ?? 10) * 1000;
 const DOBRO_MAX_MS = (cfg.dobroMaximoSegundos ?? 60) * 1000;
 const VENCEDOR_MS = 5000;
-const MAX_TEXTOS = 40, MAX_PARTICULAS = 300;
-const MEIO = 540, CURSO = 380;            // marcador anda ±380 px até a linha do time
-const CORDA_Y = 990, CHAO_Y = 1110, ARENA = { x: 30, y: 420, w: 1020, h: 840 };
-const EMOJI = { rose: '🌹', gg: '✨', doughnut: '🍩', galaxy: '🌌' };
+const MAX_TEXTOS = 14;
+const MARCOS = [10, 25, 50, 100, 250, 500, 1000];
+const EMOJI_ACAO = { puxinho: '🌹', puxao: '✨', dobro: '🍩', superpuxao: '🌌' };
+// alturas (no mundo 3D, acima do time) dos textos flutuantes, uma faixa para cada tipo: todas entre a cabeça
+// dos bonecos e o placar (≈ 650–850 px), para nenhum texto nascer em cima dos números
+const ALTURA = { comentario: 2.5, ganho: 2.95, dobro: 3.4, combo: 3.85 };
 
-TIMES.forEach((t, i) => { palco.style.setProperty('--cor' + i, t.cor); $('nome' + i).textContent = t.nome; });
+TIMES.forEach((t, i) => {
+  palco.style.setProperty('--cor' + i, t.cor);
+  $('nome' + i).textContent = t.nome;
+});
 $('titulo').textContent = cfg.titulo ?? 'CABO DE GUERRA';
+
+// dica: "Comente A → Meninos · B → Meninas"
 $('dica').append('Comente ');
 TIMES.forEach((t, i) => {
   const s = document.createElement('span');
   s.className = 't' + i;
   const b = document.createElement('b');
   b.textContent = cfg.palavras[i ? 'B' : 'A'][0];
-  s.append(b, ` → ${t.nome}`);
+  s.append(b, ` ${t.nome}`);
   $('dica').append(s, i ? '' : '  ·  ');
 });
-const rotulo = (ref) => typeof ref === 'number' ? `🎁 #${ref}` : `${EMOJI[ref.toLowerCase()] ?? '🎁'} ${ref}`;
-const legenda = [`💬 ${cfg.palavras.A[0]}/${cfg.palavras.B[0]} puxa ${FORCA.comentario ?? 1}`];
-for (const [acao, refs] of Object.entries(cfg.acoes ?? {})) {
-  const efeito = acao === 'dobro' ? `força x2 ${DOBRO_MS / 1000}s` : `puxa ${FORCA[acao] ?? 0}`;
-  legenda.push(`${refs.map(rotulo).join(' / ')} ${efeito}`);
-}
-for (const t of legenda) $('legenda').appendChild(document.createElement('span')).textContent = t;
 
+// presentes: emoji grande + efeito, metade de cada lado
+function emojiDe(acao, refs) {
+  const nome = refs.find(r => typeof r === 'string');
+  return emojiDoPresente(nome, EMOJI_ACAO[acao] ?? '🎁');
+}
+const chips = Object.entries(cfg.acoes ?? {}).map(([acao, refs]) => {
+  const chip = document.createElement('div');
+  chip.className = 'chip-presente';
+  const emoji = document.createElement('span');
+  emoji.className = 'emoji';
+  emoji.textContent = emojiDe(acao, refs);
+  const efeito = document.createElement('span');
+  efeito.className = 'efeito';
+  efeito.textContent = acao === 'dobro' ? `x2 ${DOBRO_MS / 1000}s` : `PUXA ${FORCA[acao] ?? 0}`;
+  chip.append(emoji, efeito);
+  return chip;
+});
+const metade = Math.ceil(chips.length / 2);
+$('presentes0').append(...chips.slice(0, metade));
+$('presentes1').append(...chips.slice(metade));
+
+/* ---------- estado ---------- */
 const times = criarTimes(cfg.palavras);
 const salvo = lembrar('cabo:placar', null);
 let placar = Array.isArray(salvo) && salvo.length === 2 && salvo.every(Number.isFinite) ? salvo : [0, 0];
 let pos = 0, vis = 0;                       // pos < 0 = lado do time 0; ±LIMITE encerra a rodada
-let dobroAte = [0, 0], tensao = [0, 0], guardado = [0, 0];
-let fim = null, faixa = null, tremor = 0, clarão = 0;
-let textos = [], parts = [];
-const avisar = avisos($('avisos'));
+let forca = [0, 0];                         // força puxada por cada time na rodada
+let dobroAte = [0, 0], tensao = [0, 0], guardado = [0, 0], torcida = [0, 0];
+let fim = null, faixa = null, vencedorAtual = -1, clarao = 0, lider = 0;
+const avisar = avisos($('avisos'), { max: 3 });
+const combo = criarCombo({ janela: 3500 });
+const ranking = criarRanking();
+const contadores = [contadorForca($('forca0')), contadorForca($('forca1'))];
+const timerCombo = [0, 0];
 const idx = (t) => t === 'A' ? 0 : 1;
 
-function hud() {
+// Número de força que conta até o valor novo, andando no laço da cena 3D. (O contador do kit mede pelo
+// horário do quadro, que num PC lento fica antes do início da animação e faz o número passar do ponto.)
+function contadorForca(el) {
+  let atual = 0, de = 0, alvo = 0, inicio = 0;
+  el.textContent = '0';
+  return {
+    para(valor, pular = true) {
+      de = atual; alvo = valor; inicio = performance.now();
+      if (pular && valor !== de) animar(el);
+    },
+    passo(agora) {
+      if (atual === alvo) return;
+      const k = Math.min(1, Math.max(0, (agora - inicio) / 450));
+      atual = Math.round(de + (alvo - de) * (1 - (1 - k) ** 3));
+      el.textContent = atual.toLocaleString('pt-BR');
+    }
+  };
+}
+
+function hud(pular = true) {
   const n = times.tamanho();
-  [n.A, n.B].forEach((g, i) => { $('info' + i).textContent = `👥 ${g} ${g === 1 ? 'pessoa' : 'pessoas'} · 🏆 ${placar[i]}`; });
+  [n.A, n.B].forEach((g, i) => { $('gente' + i).textContent = `👥 ${g} ${g === 1 ? 'pessoa' : 'pessoas'}`; });
+  const f0 = Math.max(0, Math.min(1, (LIMITE - pos) / (2 * LIMITE)));
+  const pct = (f) => (f * 100).toLocaleString('pt-BR', { maximumFractionDigits: 1 }) + '%';
+  $('pct0').textContent = pct(f0);
+  $('pct1').textContent = pct(1 - f0);
+  contadores[0].para(forca[0], pular);
+  contadores[1].para(forca[1], pular);
+  $('trofeu0').textContent = placar[0];
+  $('trofeu1').textContent = placar[1];
+  $('rodada').textContent = `RODADA ${placar[0] + placar[1] + 1}`;
+  for (let i = 0; i < 2; i++) $('falta' + i).textContent = `faltam ${Math.max(0, Math.ceil(LIMITE + (i ? -pos : pos)))}`;
 }
 
-function flutuar(i, txt, grande = false) {
-  textos.push({ x: (i ? 790 : 290) + (Math.random() - .5) * 180, y: grande ? 760 : 820 + Math.random() * 60,
-    txt, cor: TIMES[i].cor, vida: grande ? 1.6 : 1.1, max: grande ? 1.6 : 1.1, tam: grande ? 76 : 34 });
-  if (textos.length > MAX_TEXTOS) textos.splice(0, textos.length - MAX_TEXTOS);
+// texto que sobe acima do time (presa à posição 3D dele) e nunca em cima do placar
+function sobreTime(i, altura, texto, cor, tamanho) {
+  const p = arena.acima(i, altura);
+  flutuar(palco, { x: p.x, y: p.y, texto, cor, tamanho });
 }
 
-function soltar(n, x, y, cor, forca, gravidade = 900) {
-  for (let k = 0; k < n; k++) {
-    const a = Math.random() * Math.PI * 2, v = forca * (.3 + Math.random() * .7);
-    parts.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - forca * .4, g: gravidade, cor,
-      tam: 6 + Math.random() * 10, vida: .6 + Math.random() * .8 });
+// "+1 nick" de quem comentou, subindo de cima do time (no máximo MAX_TEXTOS na tela)
+function textoPuxada(i, txt) {
+  const camada = $('textos');
+  if (camada.childElementCount >= MAX_TEXTOS) camada.firstElementChild.remove();
+  const p = arena.acima(i, ALTURA.comentario);
+  const el = document.createElement('div');
+  el.className = 'puxada txt-jogo';
+  el.textContent = txt;
+  el.style.cssText = `left:${p.x + (Math.random() - .5) * 240}px;top:${p.y - Math.random() * 30}px;color:${TIMES[i].cor}`;
+  el.addEventListener('animationend', () => el.remove(), { once: true });
+  camada.append(el);
+}
+
+function mostrarCombo(i, n, ganho, presente) {
+  if (n < 2) return;
+  const el = $('combo' + i);
+  el.textContent = `COMBO x${n}`;
+  el.classList.add('on');
+  animar(el);
+  clearTimeout(timerCombo[i]);
+  timerCombo[i] = setTimeout(() => el.classList.remove('on'), 3500);
+  if (presente) tocar('combo', n);
+  // passou de um marco (10, 25, 50...): explosão e tremida
+  if (MARCOS.some(m => n - ganho < m && n >= m)) {
+    const p = arena.acima(i, ALTURA.combo);
+    particulas(palco, { x: p.x, y: p.y, qtd: 30, forca: 1.4, cores: [TIMES[i].cor, '#ffd23f', '#fff'] });
+    sobreTime(i, ALTURA.combo, `COMBO x${n}!`, '#ffd23f', 92);
+    tremer(palco, true);
+    if (!presente) tocar('combo', n);
   }
-  if (parts.length > MAX_PARTICULAS) parts.splice(0, parts.length - MAX_PARTICULAS);
+}
+
+function mostrarUltimo(ev, i) {
+  const u = $('ultimo');
+  u.style.setProperty('--cor', TIMES[i].cor);
+  const nome = document.createElement('span');
+  nome.className = 'quem txt-jogo';
+  nome.textContent = ev.nome || ev.user;
+  u.replaceChildren(avatar(ev, 'grande'), nome);
+  animar(u);
 }
 
 // Aplica força ao time i (já com o dobro); durante a tela de vencedor guarda para a próxima rodada.
@@ -72,14 +170,17 @@ function puxar(i, n) {
   const f = n * (performance.now() < dobroAte[i] ? 2 : 1);
   if (fim) { guardado[i] += f; return f; }
   pos += i ? f : -f;
+  forca[i] += f;
   tensao[i] = Math.min(1, tensao[i] + .2 + f / 25);
-  const off = (vis / LIMITE) * CURSO;
-  soltar(Math.min(12, 2 + f), MEIO + off + (i ? 300 : -300), CHAO_Y, 'rgba(220,226,255,.55)', 160, 300);
-  if (f >= 30) {
-    tremor = Math.min(34, 10 + f / 4);
-    clarão = .45;
-    soltar(60, MEIO + off, CORDA_Y, TIMES[i].cor, 700);
-    soltar(30, MEIO + off, CORDA_Y, '#ffc23d', 520);
+  torcida[i] = Math.min(1, torcida[i] + .25 + f / 30);
+  arena.puxou(i, f);
+  if (f >= 30) clarao = .5;
+  // virada: o outro time estava na frente e agora este passou
+  const agoraLider = pos < -8 ? 0 : pos > 8 ? 1 : lider;
+  if (agoraLider !== lider) {
+    lider = agoraLider;
+    flutuar(palco, { x: 540, y: 900, texto: `VIRADA! ${TIMES[lider].nome}`, cor: TIMES[lider].cor, tamanho: 84 });
+    tocar('virada');
   }
   if (Math.abs(pos) >= LIMITE) vencer(pos < 0 ? 0 : 1);
   return f;
@@ -87,37 +188,51 @@ function puxar(i, n) {
 
 function vencer(i) {
   pos = i ? LIMITE : -LIMITE;
+  vencedorAtual = i;
   placar[i]++;
   guardar('cabo:placar', placar);
-  hud();
+  hud(false);
+  animar($('trofeu' + i));
   faixa = document.createElement('div');
   faixa.className = 'vencedor';
   faixa.style.setProperty('--destaque', TIMES[i].cor);
   const s = document.createElement('small');
-  s.textContent = 'Fim da rodada';
+  s.textContent = `Rodada ${placar[0] + placar[1]}`;
   faixa.append(s, `🏆 ${TIMES[i].nome} venceu!`);
   palco.appendChild(faixa);
-  for (let k = 0; k < 6; k++) soltar(25, 100 + k * 176, 420, [TIMES[i].cor, '#ffc23d', '#ffffff'][k % 3], 650);
-  tremor = 30;
+  arena.vitoria(i);
+  torcida[i] = 1;
+  tocar('vitoria');
   fim = setTimeout(novaRodada, VENCEDOR_MS);
 }
 
 function novaRodada() {
   clearTimeout(fim);
   fim = null;
+  vencedorAtual = -1;
   faixa?.remove();
+  faixa = null;
   // presentes que chegaram no intervalo valem na nova rodada (sem encerrar de cara)
   pos = Math.max(-LIMITE * .5, Math.min(LIMITE * .5, guardado[1] - guardado[0]));
+  forca = [...guardado];
   guardado = [0, 0];
+  lider = pos < -8 ? 0 : pos > 8 ? 1 : lider;
+  combo.zerar();
+  arena.reiniciar();
+  hud(false);
 }
 
 function aoEvento(ev) {
+  const quem = ev.nome || ev.user;
   if (ev.tipo === 'comentario') {
     const t = times.pelaPalavra(ev);
     if (!t) return;
     const i = idx(t);
     const f = puxar(i, FORCA.comentario ?? 1);
-    flutuar(i, `+${f} ${String(ev.nome || ev.user).slice(0, 14)}`);
+    textoPuxada(i, `+${f} ${String(quem).slice(0, 14)}`);
+    ranking.somar(ev, f, { cor: TIMES[i].cor });
+    pintarRanking($('ranking'), ranking.top(4));
+    mostrarCombo(i, combo.registrar(i, 1), 1, false);
     hud();
     return;
   }
@@ -126,176 +241,95 @@ function aoEvento(ev) {
   if (!acao) return;
   const i = idx(times.doUsuario(ev.user));
   const q = ev.quantidade ?? 1;
-  const quem = ev.nome || ev.user;
-  hud();
+  const emoji = emojiDoPresente(ev.presenteNome, EMOJI_ACAO[acao] ?? '🎁');
+  const sobre = arena.acima(i, ALTURA.ganho);
+  mostrarUltimo(ev, i);
+  mostrarCombo(i, combo.registrar(i, q), q, true);
+  particulas(palco, { x: sobre.x, y: sobre.y, qtd: Math.min(q + 2, 8), emoji, forca: .8 });
+
   if (acao === 'dobro') {
     dobroAte[i] = Math.min(Math.max(dobroAte[i], performance.now()) + DOBRO_MS * q, performance.now() + DOBRO_MAX_MS);
-    tremor = 14;
-    soltar(50, i ? 790 : 290, 560, '#ffc23d', 600);
-    flutuar(i, '⚡ FORÇA x2', true);
-    avisar(html`<span class="t${i}"><b>${quem}</b> mandou ${q}× ${ev.presenteNome} → <span class="mais">⚡ força x2 em ${TIMES[i].nome}</span></span>`);
+    arena.dobro(i);
+    sobreTime(i, ALTURA.dobro, 'FORÇA x2!', '#ffd23f', 88);
+    animar($('dobro' + i));
+    tocar('virada');
+    ranking.somar(ev, 0, { cor: TIMES[i].cor });
+    pintarRanking($('ranking'), ranking.top(4), { destaque: ev.user });
+    avisar(html`<span class="t${i}"><b>${quem}</b> ${q}× ${ev.presenteNome} <span class="mais">⚡ x2</span></span>`);
+    hud(false);
     return;
   }
+
   const f = puxar(i, (FORCA[acao] ?? 0) * q);
-  flutuar(i, `+${f}`, f >= 10);
-  avisar(html`<span class="t${i}"><b>${quem}</b> mandou ${q}× ${ev.presenteNome} → <span class="mais">puxou ${f} para ${TIMES[i].nome}</span></span>`);
+  ranking.somar(ev, f, { cor: TIMES[i].cor });
+  pintarRanking($('ranking'), ranking.top(4), { destaque: ev.user });
+  if (acao === 'superpuxao') {
+    clarao = .7;
+    arena.superpuxao(i);
+    tremer(palco, true);
+    const meio = arena.fita();
+    flutuar(palco, { x: 540, y: meio.y - 50, texto: 'SUPERPUXÃO!', cor: TIMES[i].cor, tamanho: 116 });
+    sobreTime(i, ALTURA.ganho, `+${f}`, TIMES[i].cor, 120);
+    particulas(palco, { x: meio.x, y: meio.y, qtd: 12, emoji, forca: 1.6 });
+    tocar('impacto');
+  } else {
+    sobreTime(i, ALTURA.ganho, `+${f}`, TIMES[i].cor, f >= 10 ? 110 : 90);
+    if (f >= 10) tremer(palco);
+    tocar(f >= 30 ? 'impacto' : 'ponto');
+  }
+  avisar(html`<span class="t${i}"><b>${quem}</b> ${q}× ${ev.presenteNome} <span class="mais">+${f}</span></span>`);
+  hud();
 }
 
-/* ---------- desenho ---------- */
+/* ---------- laço único (cena 3D) ---------- */
 
-const cv = $('cena'), ctx = cv.getContext('2d');
-
-function boneco(x, cor, lado, inclina, passo) {
-  const a = lado * inclina;
-  ctx.save();
-  ctx.translate(x, CHAO_Y);
-  ctx.lineCap = 'round';
-  ctx.strokeStyle = '#2a3150';
-  ctx.lineWidth = 16;
-  ctx.beginPath();
-  ctx.moveTo(lado * 10, -62); ctx.lineTo(-lado * 26 + passo, 0);
-  ctx.moveTo(lado * 10, -62); ctx.lineTo(-lado * 2 - passo, 0);
-  ctx.stroke();
-  ctx.rotate(a);
-  ctx.fillStyle = cor;
-  ctx.beginPath(); ctx.roundRect(-27, -150, 54, 96, 22); ctx.fill();
-  ctx.fillStyle = '#f2f4ff';
-  ctx.beginPath(); ctx.arc(0, -184, 32, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = '#0b0d17';
-  ctx.beginPath(); ctx.arc(-lado * 12, -188, 5, 0, Math.PI * 2); ctx.arc(-lado * 24, -188, 5, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
-  // braço do ombro até a corda
-  const ox = x + Math.sin(a) * 128, oy = CHAO_Y - Math.cos(a) * 128;
-  ctx.strokeStyle = cor;
-  ctx.lineWidth = 15;
-  ctx.lineCap = 'round';
-  ctx.beginPath(); ctx.moveTo(ox, oy); ctx.lineTo(ox - lado * 46, CORDA_Y); ctx.stroke();
-}
-
-function pilula(txt, x, y, cor, fundo) {
-  ctx.font = '900 34px "Segoe UI", system-ui, sans-serif';
-  const w = ctx.measureText(txt).width + 40;
-  ctx.fillStyle = fundo;
-  ctx.beginPath(); ctx.roundRect(x - w / 2, y - 30, w, 60, 30); ctx.fill();
-  ctx.fillStyle = cor;
-  ctx.fillText(txt, x, y + 2);
-}
-
-function cena(agora, dt) {
-  const off = (vis / LIMITE) * CURSO;
-  ctx.fillStyle = 'rgba(8,10,20,.72)';
-  ctx.beginPath(); ctx.roundRect(ARENA.x, ARENA.y, ARENA.w, ARENA.h, 40); ctx.fill();
-  ctx.save();
-  ctx.beginPath(); ctx.roundRect(ARENA.x, ARENA.y, ARENA.w, ARENA.h, 40); ctx.clip();
-
-  // zonas finais e linhas de chegada
-  TIMES.forEach((t, i) => {
-    const lx = MEIO + (i ? CURSO : -CURSO);
-    ctx.globalAlpha = .16;
-    ctx.fillStyle = t.cor;
-    ctx.fillRect(i ? lx : ARENA.x, ARENA.y, i ? ARENA.x + ARENA.w - lx : lx - ARENA.x, ARENA.h);
-    ctx.globalAlpha = 1;
-    ctx.fillRect(lx - 4, ARENA.y + 150, 8, CHAO_Y - ARENA.y - 150);
-  });
-  ctx.fillStyle = '#1b2036';
-  ctx.fillRect(ARENA.x, CHAO_Y, ARENA.w, ARENA.y + ARENA.h - CHAO_Y);
-  ctx.fillStyle = 'rgba(255,255,255,.12)';
-  ctx.fillRect(ARENA.x, CHAO_Y, ARENA.w, 6);
-  ctx.setLineDash([14, 14]);
-  ctx.strokeStyle = 'rgba(255,255,255,.45)';
-  ctx.lineWidth = 4;
-  ctx.beginPath(); ctx.moveTo(MEIO, ARENA.y + 150); ctx.lineTo(MEIO, CHAO_Y); ctx.stroke();
-  ctx.setLineDash([]);
-
-  // bonecos (andam com a corda)
-  const t = agora / 1000;
-  TIMES.forEach((tm, i) => {
-    const lado = i ? 1 : -1;
-    for (let k = 0; k < 4; k++) {
-      const inc = .3 + tensao[i] * .28 + Math.sin(t * 6 + k * 1.7) * .03;
-      const passo = tensao[i] > .1 ? Math.sin(t * 14 + k) * 8 : 0;
-      boneco(MEIO + off + lado * (200 + k * 92), tm.cor, lado, inc, passo);
+// pílula de força x2 com contagem regressiva
+const dobroTxt = ['', ''];
+function pintarDobro(agora) {
+  for (let i = 0; i < 2; i++) {
+    const resta = Math.ceil((dobroAte[i] - agora) / 1000);
+    const txt = resta > 0 ? `${resta}s` : '';
+    if (txt === dobroTxt[i]) continue;
+    dobroTxt[i] = txt;
+    $('dobro' + i).classList.toggle('on', resta > 0);
+    if (txt) {
+      $('dobroS' + i).textContent = txt;
+      if (resta <= 3) tocar('tique');
     }
-  });
-
-  // corda
-  ctx.lineCap = 'butt';
-  ctx.strokeStyle = '#d8b27a';
-  ctx.lineWidth = 20;
-  ctx.beginPath(); ctx.moveTo(-50, CORDA_Y); ctx.lineTo(1130, CORDA_Y); ctx.stroke();
-  ctx.setLineDash([10, 12]);
-  ctx.lineDashOffset = -off;
-  ctx.strokeStyle = '#9c7444';
-  ctx.lineWidth = 8;
-  ctx.beginPath(); ctx.moveTo(-50, CORDA_Y); ctx.lineTo(1130, CORDA_Y); ctx.stroke();
-  ctx.setLineDash([]);
-
-  // marcador
-  const mx = MEIO + off;
-  ctx.fillStyle = '#ffc23d';
-  ctx.beginPath();
-  ctx.moveTo(mx - 20, CORDA_Y); ctx.lineTo(mx + 20, CORDA_Y); ctx.lineTo(mx + 14, CORDA_Y + 96);
-  ctx.lineTo(mx, CORDA_Y + 78); ctx.lineTo(mx - 14, CORDA_Y + 96); ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.arc(mx, CORDA_Y, 20, 0, Math.PI * 2); ctx.fill();
-  ctx.restore();
-
-  // quanto falta + força dobrada
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  TIMES.forEach((tm, i) => {
-    const falta = Math.max(0, Math.ceil(LIMITE + (i ? -pos : pos)));
-    ctx.font = '900 40px "Segoe UI", system-ui, sans-serif';
-    ctx.fillStyle = tm.cor;
-    ctx.fillText(`faltam ${falta}`, i ? 830 : 250, ARENA.y + 56);
-    const resta = (dobroAte[i] - agora) / 1000;
-    if (resta > 0) pilula(`⚡ x2 · ${Math.ceil(resta)}s`, i ? 830 : 250, ARENA.y + 122, '#0b0d17', '#ffc23d');
-  });
-
-  // partículas
-  for (const p of parts) {
-    p.vida -= dt; p.vy += p.g * dt; p.x += p.vx * dt; p.y += p.vy * dt;
-    ctx.globalAlpha = Math.max(0, Math.min(1, p.vida * 2));
-    ctx.fillStyle = p.cor;
-    ctx.fillRect(p.x - p.tam / 2, p.y - p.tam / 2, p.tam, p.tam);
   }
-  parts = parts.filter(p => p.vida > 0 && p.y < 1960);
-
-  // textos flutuantes
-  ctx.lineJoin = 'round';
-  for (const s of textos) {
-    s.vida -= dt; s.y -= 90 * dt;
-    ctx.globalAlpha = Math.max(0, Math.min(1, s.vida / s.max * 2.5));
-    ctx.font = `900 ${s.tam}px "Segoe UI", system-ui, sans-serif`;
-    ctx.lineWidth = s.tam / 5;
-    ctx.strokeStyle = '#0b0d17';
-    ctx.strokeText(s.txt, s.x, s.y);
-    ctx.fillStyle = s.cor;
-    ctx.fillText(s.txt, s.x, s.y);
-  }
-  textos = textos.filter(s => s.vida > 0);
-  ctx.globalAlpha = 1;
 }
 
+// placas "faltam N" presas às linhas de vitória do gramado
+const placasFalta = [$('falta0'), $('falta1')];
+function posicionarPlacas() {
+  placasFalta.forEach((el, i) => {
+    const p = arena.linha(i);
+    // não desce até a dica de comentário, mesmo quando a câmera chega perto
+    el.style.transform = `translate(${p.x.toFixed(1)}px, ${Math.min(1250, p.y).toFixed(1)}px) translate(-50%, -50%)`;
+  });
+}
+
+const flash = $('clarao');
 let antes = performance.now();
-function quadro(agora) {
-  const dt = Math.min(.05, (agora - antes) / 1000);
+arena.c3d.aoQuadro((dt, t) => {
+  const agora = performance.now();
+  // o clarão segue o relógio de verdade: some rápido mesmo quando o PC renderiza devagar
+  const real = Math.min(.5, (agora - antes) / 1000);
   antes = agora;
   vis += (pos - vis) * (1 - Math.exp(-dt * 7));
   tensao = tensao.map(v => Math.max(0, v - dt * 1.4));
-  tremor *= Math.exp(-dt * 7);
-  clarão = Math.max(0, clarão - dt * 1.5);
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.clearRect(0, 0, 1080, 1920);
-  if (tremor > .5) ctx.translate((Math.random() - .5) * tremor, (Math.random() - .5) * tremor);
-  cena(agora, dt);
-  if (clarão > 0) {
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.fillStyle = `rgba(255,255,255,${clarão * .5})`;
-    ctx.fillRect(0, 0, 1080, 1920);
-  }
-  requestAnimationFrame(quadro);
-}
+  torcida = torcida.map(v => Math.max(0, v - dt * .8));
+  clarao = Math.max(0, clarao - real * 1.6);
+  flash.style.opacity = (clarao * .45).toFixed(3);
+  arena.quadro(dt, t, { m: vis / LIMITE, tensao, torcida, vencedor: vencedorAtual,
+    dobro: [dobroAte[0] > agora, dobroAte[1] > agora] });
+  posicionarPlacas();
+  pintarDobro(agora);
+  contadores[0].passo(agora);
+  contadores[1].passo(agora);
+});
 
+/* ---------- teclas de teste ---------- */
 function rajada() {
   const presentes = ['Rose', 'Rose', 'GG', 'GG', 'Doughnut', 'Galaxy', 'Finger Heart'];
   for (let k = 0; k < 20; k++) setTimeout(() => aoEvento(Math.random() < .6
@@ -304,20 +338,42 @@ function rajada() {
   ), k * 120);
 }
 
+// 1/2: quem comentou A/B manda o superpuxão (Galaxy por padrão)
+function superDoTime(i) {
+  const ref = cfg.acoes?.superpuxao?.[0] ?? 'Galaxy';
+  const ev = eventoFalso(typeof ref === 'number' ? { presenteId: ref, presenteNome: 'presente' } : { presenteNome: String(ref) });
+  times.pelaPalavra({ user: ev.user, texto: cfg.palavras[i ? 'B' : 'A'][0] });
+  aoEvento(ev);
+}
+
+// 3/4: força x2 para o time A/B (Doughnut por padrão)
+function dobroDoTime(i) {
+  const ref = cfg.acoes?.dobro?.[0] ?? 'Doughnut';
+  const ev = eventoFalso(typeof ref === 'number' ? { presenteId: ref, presenteNome: 'presente' } : { presenteNome: String(ref) });
+  times.pelaPalavra({ user: ev.user, texto: cfg.palavras[i ? 'B' : 'A'][0] });
+  aoEvento(ev);
+}
+
 teclas({
   t: rajada,
+  1: () => superDoTime(0),
+  2: () => superDoTime(1),
+  3: () => dobroDoTime(0),
+  4: () => dobroDoTime(1),
   r: () => {
     placar = [0, 0];
     guardar('cabo:placar', placar);
     dobroAte = [0, 0];
     times.zerar();
+    ranking.zerar();
+    pintarRanking($('ranking'), []);
     guardado = [0, 0];
     novaRodada();
     pos = 0;
-    hud();
+    forca = [0, 0];
+    hud(false);
   }
 });
 
-hud();
-requestAnimationFrame(quadro);
+hud(false);
 conectar(aoEvento);

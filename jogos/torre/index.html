@@ -5,34 +5,83 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Torre Alta</title>
 <link rel="stylesheet" href="../kit/kit.css">
+<script type="importmap">{ "imports": { "three": "../kit/vendor/three.module.min.js", "three/addons/": "../kit/vendor/addons/" } }</script>
 <style>
-  body{font-weight:800}
-  .hud{position:absolute;left:40px;right:40px;top:40px;display:flex;gap:20px}
-  .caixa{flex:1;padding:20px 30px 22px;border-radius:34px;background:rgba(8,10,20,.84);border:3px solid rgba(255,255,255,.12);
-    box-shadow:0 30px 60px -30px rgba(0,0,0,.9)}
-  .caixa small{display:block;font-size:28px;font-weight:900;letter-spacing:.2em;color:rgba(255,255,255,.62)}
-  .caixa b{display:block;font-size:128px;font-weight:900;line-height:1;color:#3df2c2;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
-  .caixa span{font-size:30px;font-weight:800;color:rgba(255,255,255,.62)}
-  .caixa.rec{flex:.8}
-  .caixa.rec b{color:#ffc23d;font-size:96px;margin-top:14px}
-  .caixa.rec.pulso{animation:recorde .9s cubic-bezier(.2,1.4,.4,1)}
-  @keyframes recorde{30%{transform:scale(1.08);border-color:#ffc23d}}
-  .ultimo{position:absolute;left:40px;right:40px;top:300px;padding:16px 26px;border-radius:24px;background:rgba(8,10,20,.78);
-    font-size:38px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .avisos{position:absolute;left:40px;right:40px;top:400px}
-  .legenda{position:absolute;left:30px;right:30px;bottom:30px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
-  .legenda div{padding:10px 18px;border-radius:999px;background:rgba(8,10,20,.84);border:2px solid rgba(255,255,255,.14);font-size:28px;font-weight:800;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .legenda i{font-style:normal;color:#3df2c2}
+  /* faixas escuras atrás do HUD e do rodapé para ler bem em qualquer cor de céu */
+  .sombra-topo{position:absolute;left:0;right:0;top:0;height:520px;pointer-events:none;
+    background:linear-gradient(180deg,rgba(10,6,30,.55),rgba(10,6,30,.25) 60%,transparent)}
+  .sombra-base{position:absolute;left:0;right:0;bottom:0;height:560px;pointer-events:none;
+    background:linear-gradient(0deg,rgba(10,6,30,.82),rgba(10,6,30,.6) 70%,transparent)}
+
+  .titulo{position:absolute;left:0;right:0;top:28px;text-align:center;font-size:50px;color:#fff}
+
+  /* altura gigante no centro */
+  .altura{position:absolute;left:300px;right:300px;top:96px;text-align:center}
+  .altura small{display:block;font-size:40px;color:#bfe9ff;letter-spacing:.08em}
+  /* altura da linha fixa: a fonte diminui a partir de 4 dígitos (no game.js) sem mexer no resto */
+  .altura b{display:inline-block;font-size:250px;line-height:250px;height:250px;color:#fff;margin-top:4px;font-variant-numeric:tabular-nums}
+  .altura span{display:block;font-size:42px;color:#3df2c2;margin-top:6px}
+  .combo{position:absolute;left:0;right:0;top:470px;text-align:center;font-size:76px;color:var(--ouro);opacity:0;transition:opacity .2s}
+  .combo.on{opacity:1}
+
+  /* recorde com troféu (esquerda) */
+  .recorde{position:absolute;left:30px;top:120px;width:270px;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .recorde .copa{font-size:110px;line-height:1;filter:drop-shadow(0 6px 0 rgba(0,0,0,.35))}
+  .recorde b{font-size:92px;line-height:92px;height:92px;color:var(--ouro)}
+  .recorde small{font-size:34px;color:#fff}
+  .recorde.festa .copa{animation:copa 1s cubic-bezier(.2,1.5,.4,1) 3}
+  @keyframes copa{40%{transform:scale(1.35) rotate(-12deg)}70%{transform:scale(1.15) rotate(10deg)}}
+
+  /* último construtor (direita) */
+  .construtor{position:absolute;right:30px;top:112px;width:270px;display:flex;flex-direction:column;align-items:center;gap:8px}
+  .construtor .avatar{border-color:var(--cor,#fff);box-shadow:0 0 0 6px rgba(0,0,0,.25),0 0 34px var(--cor,#fff)}
+  .construtor .quem{font-size:38px;color:#fff;max-width:270px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .construtor .fez{font-size:40px;color:var(--cor,#3df2c2)}
+  .construtor .vazio{font-size:120px;line-height:1;filter:drop-shadow(0 6px 0 rgba(0,0,0,.35))}
+
+  /* rodapé: ranking, avisos e presentes sobre uma faixa escura translúcida (a cena 3D continua por trás) */
+  .rodape{position:absolute;left:0;right:0;top:1400px;bottom:0;
+    background:linear-gradient(180deg,rgba(10,6,30,0),rgba(10,6,30,.6) 60px,rgba(10,6,30,.8) 180px,rgba(10,6,30,.86))}
+  .ranking-box{position:absolute;left:30px;width:580px;top:1440px}
+  .ranking-box h3{margin:0 0 10px 6px;font-size:42px;color:#fff}
+  .ranking-box .ranking{gap:10px}
+  .ranking-box .ranking-item{font-size:30px;padding:4px 18px 4px 8px}
+  .ranking-box .avatar.pequeno{--tam:54px}
+  .ranking-box .ranking-pts{font-size:38px}
+  .ranking-box .vazio{font-size:30px;color:rgba(255,255,255,.85);padding:12px 22px;border-radius:30px;
+    background:rgba(14,10,32,.82);border:2px solid rgba(255,255,255,.14)}
+
+  .avisos{position:absolute;left:636px;right:24px;top:1450px;height:290px;justify-content:flex-start;align-items:stretch}
+  .avisos .aviso{font-size:25px;padding:8px 18px;border-radius:24px;line-height:1.15}
+  .avisos .aviso .mais{color:var(--ouro)}
+
+  .legenda{position:absolute;left:20px;right:20px;bottom:22px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .legenda .chip-presente{padding:8px 6px 10px;border-radius:30px;background:linear-gradient(180deg,rgba(40,32,80,.92),rgba(14,10,32,.92));
+    border:3px solid rgba(255,255,255,.22);box-shadow:0 6px 0 rgba(0,0,0,.35)}
+  .legenda .chip-presente .emoji{font-size:54px}
+  .legenda .chip-presente .efeito{font-size:34px}
+  .legenda .chip-presente .efeito.ruim{color:#ff6b8a}
+  .legenda .chip-presente .efeito.bom{color:#3df2c2}
+  .legenda .chip-presente .nome{font-size:24px;color:rgba(255,255,255,.8);max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* faixa de novo recorde / nova zona do céu */
+  .vencedor{--destaque:var(--ouro);top:620px}
+  .vencedor.zona{--destaque:#7c5cff;font-size:90px;padding:40px 30px}
 </style>
 </head>
 <body>
-<div class="palco">
-  <canvas id="tela" width="1080" height="1920"></canvas>
-  <header class="hud">
-    <div class="caixa"><small>ALTURA</small><b id="altura">0</b><span>blocos</span></div>
-    <div class="caixa rec" id="caixaRec"><small>RECORDE</small><b id="recorde">0</b></div>
-  </header>
-  <div class="ultimo" id="ultimo"></div>
+<div class="palco" id="palco">
+  <div class="sombra-topo"></div>
+  <div class="sombra-base"></div>
+
+  <div class="titulo titulo-jogo" id="titulo">Torre Alta</div>
+  <div class="recorde" id="caixaRec"><span class="copa">🏆</span><b class="txt-jogo" id="recorde">0</b><small class="txt-jogo">RECORDE</small></div>
+  <div class="altura"><small class="titulo-jogo">Altura</small><b class="txt-jogo" id="altura">0</b><span class="txt-jogo" id="zona">☀️ DIA</span></div>
+  <div class="construtor" id="construtor"><span class="vazio">🏗️</span><span class="quem txt-jogo">Construa!</span></div>
+  <div class="combo txt-jogo brilho" id="combo"></div>
+
+  <div class="rodape"></div>
+  <div class="ranking-box"><h3 class="titulo-jogo">🏗️ Construtores</h3><ol class="ranking" id="ranking"></ol></div>
   <div class="avisos" id="avisos"></div>
   <footer class="legenda" id="legenda"></footer>
 </div>

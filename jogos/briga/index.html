@@ -5,63 +5,151 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Briga da Live</title>
 <link rel="stylesheet" href="../kit/kit.css">
+<script type="importmap">{ "imports": { "three": "../kit/vendor/three.module.min.js", "three/addons/": "../kit/vendor/addons/" } }</script>
 <style>
   .l0{--cor:var(--cor-a)}.l1{--cor:var(--cor-b)}
-  .hud{position:absolute;left:30px;right:30px;top:36px;display:grid;grid-template-columns:1fr 200px 1fr;gap:18px;align-items:start}
-  .lado{min-width:0}
-  .lado.l1{text-align:right}
-  .nome{font-size:48px;font-weight:900;line-height:1.1;color:var(--cor);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    text-shadow:0 4px 0 #0b0d17}
-  .barra{position:relative;height:64px;margin-top:10px;border-radius:20px;overflow:hidden;background:#1b2036;
-    border:5px solid #eef1fa;box-shadow:0 8px 0 #0b0d17}
+
+  /* sombra suave em cima e embaixo da cena 3D para o placar ficar legível */
+  .vinheta{position:absolute;inset:0;pointer-events:none;
+    background:linear-gradient(180deg,rgba(10,4,24,.82) 0,rgba(10,4,24,.55) 330px,rgba(10,4,24,0) 520px,rgba(10,4,24,0) 1300px,rgba(10,4,24,.78) 1450px,rgba(10,4,24,.94) 1600px,rgba(10,4,24,.96) 100%)}
+  /* clarão branco só sobre a cena 3D (fica embaixo do placar) */
+  .clarao{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
+
+  /* topo: troféus de rounds e pílula do round */
+  .topo{position:absolute;left:36px;right:36px;top:28px;height:112px;display:flex;align-items:center;justify-content:space-between}
+  .trofeu{display:flex;align-items:center;gap:8px;font-size:84px;line-height:1;filter:drop-shadow(0 6px 0 rgba(0,0,0,.3))}
+  .trofeu b{font-size:72px;color:#fff;display:inline-block}
+  .pilula{font-size:60px;padding:10px 40px}
+
+  /* nomes grandes e barras de vida */
+  .nomes{position:absolute;left:30px;right:30px;top:150px;display:flex;justify-content:space-between;gap:20px}
+  .nome{font-size:76px;color:var(--cor);max-width:480px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:6px 4px 14px}
+  .barras{position:absolute;left:22px;right:22px;top:258px;display:grid;grid-template-columns:1fr 126px 1fr;align-items:center}
+  .vs{text-align:center;font-size:78px;color:var(--ouro);rotate:-6deg}
+  .barra{position:relative;height:92px;border-radius:46px;overflow:hidden;background:linear-gradient(180deg,#120a24,#2a1840);
+    border:6px solid #fff;box-shadow:0 8px 0 rgba(0,0,0,.4),0 0 40px color-mix(in srgb,var(--cor) 65%,transparent)}
   .vida,.rastro{position:absolute;inset:0;transform-origin:left center}
   .l1 .vida,.l1 .rastro{transform-origin:right center}
-  .rastro{background:#ffc23d;transition:transform .6s .35s ease}
-  .vida{background:linear-gradient(180deg,color-mix(in srgb,var(--cor) 70%,#fff),var(--cor) 55%,color-mix(in srgb,var(--cor) 70%,#000));
+  /* "dano recente": fica para trás e desce devagar quando a sequência de golpes para */
+  .rastro{background:linear-gradient(180deg,#fff,#ffe07a 60%,#ffb02e);transition:transform .8s .5s cubic-bezier(.4,0,.2,1)}
+  .vida{background:linear-gradient(180deg,color-mix(in srgb,var(--cor) 55%,#fff) 0%,var(--cor) 45%,color-mix(in srgb,var(--cor) 65%,#000) 100%);
     transition:transform .12s ease-out}
-  .barra.perigo .vida{animation:perigo .5s steps(2) infinite}
-  @keyframes perigo{50%{filter:brightness(1.6)}}
-  .info{display:flex;justify-content:space-between;margin-top:14px;font-size:34px;font-weight:800;font-variant-numeric:tabular-nums;color:#eef1fa}
-  .l1 .info{flex-direction:row-reverse}
-  .centro{text-align:center;padding:12px 0 14px;border-radius:28px;background:rgba(8,10,20,.88);border:4px solid rgba(255,255,255,.16)}
-  .placar{font-size:72px;font-weight:900;line-height:1;color:#ffc23d;font-variant-numeric:tabular-nums}
-  .placar span{color:#eef1fa;opacity:.5;font-size:48px;margin:0 6px;vertical-align:middle}
-  .round{font-size:32px;font-weight:800;letter-spacing:.12em;color:rgba(255,255,255,.75);margin-top:6px}
-  .avisos{position:absolute;left:40px;right:40px;top:1450px}
-  .aviso .mais{color:var(--cor)}
-  .aviso b{color:var(--cor)}
-  .legenda{position:absolute;left:40px;right:40px;bottom:36px;padding:22px 26px;border-radius:32px;text-align:center;
-    background:rgba(8,10,20,.88);border:3px solid rgba(255,255,255,.14)}
-  .chamada{font-size:36px;font-weight:800;line-height:1.25}
-  .chamada b{color:var(--cor);font-weight:900}
-  .golpes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
-  .chip{font-size:32px;font-weight:800;padding:8px 14px;border-radius:18px;background:#151a2c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .barra .reflexo{position:absolute;inset:9px 30px auto;height:18px;border-radius:9px;background:rgba(255,255,255,.42)}
+  .barra .hp{position:absolute;inset:0;display:grid;place-items:center;font-size:52px;color:#fff;font-variant-numeric:tabular-nums}
+  .barra.perigo{animation:perigo .45s ease-in-out infinite alternate}
+  @keyframes perigo{to{border-color:#ff3b4f;box-shadow:0 8px 0 rgba(0,0,0,.4),0 0 60px #ff3b4f}}
+  .barra.apanha .vida{filter:brightness(1.8)}
+
+  /* torcida e combo de cada lutador */
+  .infos{position:absolute;left:30px;right:30px;top:370px;display:flex;justify-content:space-between;transition:opacity .3s}
+  .palco.fim-round .infos{opacity:0}
+  .info{display:flex;align-items:center;gap:18px}
+  .info.l1{flex-direction:row-reverse}
+  .torcida{display:inline-flex;white-space:nowrap;flex:none;align-items:center;gap:10px;padding:6px 20px;border-radius:999px;font-size:32px;font-weight:800;
+    background:linear-gradient(180deg,rgba(40,26,80,.92),rgba(14,8,32,.92));border:3px solid var(--cor);box-shadow:0 5px 0 rgba(0,0,0,.35)}
+  .torcida b{font-family:var(--fonte-jogo);font-weight:400;font-size:38px;color:var(--cor)}
+  .combo{font-size:50px;color:var(--ouro);opacity:0;transition:opacity .25s;white-space:nowrap}
+  .combo.on{opacity:1}
+
+  /* onomatopeia dos golpes, com estouro em estrela atrás */
+  .onoma{position:absolute;z-index:24;translate:-50% -50%;pointer-events:none;white-space:nowrap;font-size:var(--tam);color:var(--cor-onoma);
+    rotate:var(--rot);animation:onoma .75s cubic-bezier(.2,1.5,.4,1) forwards}
+  .onoma::before{content:"";position:absolute;z-index:-1;left:50%;top:50%;width:1.9em;height:1.9em;translate:-50% -50%;
+    background:radial-gradient(circle,#fff 0 30%,var(--estouro) 31%);
+    clip-path:polygon(50% 0,61% 30%,93% 14%,74% 42%,100% 55%,70% 63%,82% 95%,54% 74%,35% 100%,32% 70%,0 78%,22% 52%,4% 22%,36% 32%);opacity:.95}
+  @keyframes onoma{0%{opacity:0;transform:scale(.2)}18%{opacity:1;transform:scale(1.25)}32%{transform:scale(1)}75%{opacity:1}100%{opacity:0;transform:scale(1.08) translateY(-30px)}}
+
+  /* dano que pula da cabeça de quem apanha */
+  .dano-voa{position:absolute;z-index:23;translate:-50% -50%;pointer-events:none;text-align:center;white-space:nowrap;font-size:var(--tam);color:#fff;
+    animation:danoVoa 1.25s cubic-bezier(.2,.9,.3,1) forwards}
+  .dano-voa small{display:block;font-size:40px;color:var(--cor-nick)}
+  @keyframes danoVoa{0%{opacity:0;transform:translate(0,0) scale(.5)}12%{opacity:1;transform:translate(calc(var(--dx) * .4),-70px) scale(1.25)}
+    26%{transform:translate(calc(var(--dx) * .6),-95px) scale(1)}75%{opacity:1}100%{opacity:0;transform:translate(var(--dx),-40px) scale(.95)}}
+
+  /* ROUND N / LUTEM! */
+  .anuncio{position:absolute;z-index:25;left:0;right:0;top:500px;text-align:center;pointer-events:none;opacity:0}
+  .anuncio b{display:block;font-size:150px;color:var(--ouro)}
+  .anuncio span{display:inline-block;font-size:120px;color:#fff;rotate:-3deg;margin-top:10px}
+  .anuncio.mostra{animation:anuncio 1.8s ease-out both}
+  @keyframes anuncio{0%{opacity:0;transform:scale(.5)}14%{opacity:1;transform:scale(1.1)}24%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:scale(1.04)}}
+
+  /* K.O.! gigante (no lugar da linha de torcida/combos) e faixa do vencedor por cima dos nomes e barras:
+     a cena fica livre para ver quem ganhou comemorando e quem caiu */
+  .ko{position:absolute;z-index:26;left:0;right:0;top:380px;text-align:center;font-size:220px;color:#ff3b4f;pointer-events:none;
+    -webkit-text-stroke:.09em var(--contorno);animation:ko .7s cubic-bezier(.2,1.3,.4,1) both}
+  .ko span{display:inline-block;animation:koBrilho .5s .7s ease-in-out infinite alternate}
+  @keyframes ko{0%{opacity:0;transform:scale(3.2) rotate(-14deg)}60%{opacity:1;transform:scale(.92) rotate(3deg)}100%{transform:scale(1) rotate(-4deg)}}
+  @keyframes koBrilho{to{color:var(--ouro)}}
+  .vencedor{top:150px;padding:20px 40px 24px;font-size:84px}
+  .nomes,.barras{transition:opacity .25s}
+  .palco.com-faixa .nomes,.palco.com-faixa .barras{opacity:0}
+  .vencedor small{font-size:44px}
+
+  /* legenda dos golpes */
+  .legenda{position:absolute;left:24px;right:24px;top:1394px;display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .golpe{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:26px;min-width:0;
+    background:linear-gradient(180deg,rgba(40,26,80,.94),rgba(14,8,32,.94));border:3px solid rgba(255,255,255,.22);box-shadow:0 6px 0 rgba(0,0,0,.35)}
+  .golpe .emoji{font-size:58px;line-height:1;filter:drop-shadow(0 4px 0 rgba(0,0,0,.35))}
+  .golpe .txt{min-width:0;display:flex;flex-direction:column;gap:2px}
+  .golpe .dano{font-size:40px;color:var(--ouro)}
+  .golpe .rot{font-size:21px;letter-spacing:-.01em;font-weight:800;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#e8defc}
+
+  /* ranking de quem mais bateu */
+  .ranking-box{position:absolute;left:30px;width:610px;top:1520px}
+  .ranking-box h3{margin:0 0 10px 6px;font-size:40px;color:#fff}
+  .ranking-box .ranking{gap:9px}
+  .ranking-box .ranking-item{font-size:28px;padding:4px 18px 4px 8px}
+  .ranking-box .avatar.pequeno{--tam:54px}
+  .ranking-box .ranking-pts{font-size:36px}
+  .ranking-vazio{font-size:30px;color:#cbbcf0;padding:10px 8px}
+
+  /* último a bater */
+  .ultimo{position:absolute;left:660px;right:24px;top:1520px;height:240px;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .ultimo .avatar{border-color:var(--cor,#fff);box-shadow:0 0 0 6px rgba(0,0,0,.25),0 0 34px var(--cor,#fff)}
+  .ultimo .quem{font-size:40px;color:#fff;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px 6px}
+  .ultimo .golpeou{font-size:34px;color:var(--cor)}
+  .ultimo .espera{font-size:110px;line-height:1;margin-top:14px}
+  .avisos{position:absolute;left:660px;right:24px;top:1772px;align-items:stretch}
+  .avisos .aviso{font-size:24px;padding:6px 16px;border-radius:22px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+  .aviso .mais,.aviso b{color:var(--cor)}
+
+  /* fundo transparente (sobre a câmera da live): painel próprio atrás do HUD de baixo */
+  .palco.transparente .ranking-box,.palco.transparente .ultimo{isolation:isolate}
+  .palco.transparente .ranking-box::before,.palco.transparente .ultimo::before{content:"";position:absolute;z-index:-1;inset:-12px -12px -14px;
+    border-radius:30px;background:rgba(14,8,32,.78);box-shadow:0 0 0 3px rgba(255,255,255,.12)}
+  .palco.transparente .ultimo::before{inset:-12px 0 -14px}
 </style>
 </head>
 <body>
 <div class="palco">
-  <canvas id="tela" width="1080" height="1920"></canvas>
-  <header class="hud">
-    <div class="lado l0">
-      <div class="nome" id="nome0"></div>
-      <div class="barra" id="barra0"><div class="rastro" id="rastro0"></div><div class="vida" id="vida0"></div></div>
-      <div class="info"><span id="hp0"></span><span id="torcida0"></span></div>
-    </div>
-    <div class="centro">
-      <div class="placar" id="placar"></div>
-      <div class="round" id="round"></div>
-    </div>
-    <div class="lado l1">
-      <div class="nome" id="nome1"></div>
-      <div class="barra" id="barra1"><div class="rastro" id="rastro1"></div><div class="vida" id="vida1"></div></div>
-      <div class="info"><span id="hp1"></span><span id="torcida1"></span></div>
-    </div>
-  </header>
+  <div class="vinheta"></div>
+  <div class="clarao" id="clarao"></div>
+
+  <div class="topo">
+    <div class="trofeu">🏆<b class="txt-jogo" id="trofeu0">0</b></div>
+    <div class="pilula" id="round">ROUND 1</div>
+    <div class="trofeu"><b class="txt-jogo" id="trofeu1">0</b>🏆</div>
+  </div>
+
+  <div class="nomes">
+    <div class="nome txt-jogo l0" id="nome0"></div>
+    <div class="nome txt-jogo l1" id="nome1"></div>
+  </div>
+  <div class="barras">
+    <div class="barra l0" id="barra0"><div class="rastro" id="rastro0"></div><div class="vida" id="vida0"></div><div class="reflexo"></div><div class="hp txt-jogo" id="hp0"></div></div>
+    <div class="vs txt-jogo brilho">VS</div>
+    <div class="barra l1" id="barra1"><div class="rastro" id="rastro1"></div><div class="vida" id="vida1"></div><div class="reflexo"></div><div class="hp txt-jogo" id="hp1"></div></div>
+  </div>
+  <div class="infos">
+    <div class="info l0"><span class="torcida" id="torcida0"></span><span class="combo txt-jogo brilho" id="combo0"></span></div>
+    <div class="info l1"><span class="torcida" id="torcida1"></span><span class="combo txt-jogo brilho" id="combo1"></span></div>
+  </div>
+
+  <div class="legenda" id="golpes"></div>
+  <div class="ranking-box"><h3 class="titulo-jogo">🔥 Quem mais bateu</h3><ol class="ranking" id="ranking"></ol></div>
+  <div class="ultimo" id="ultimo"></div>
   <div class="avisos" id="avisos"></div>
-  <footer class="legenda">
-    <div class="chamada" id="chamada"></div>
-    <div class="golpes" id="golpes"></div>
-  </footer>
+  <div class="anuncio txt-jogo" id="anuncio"><b id="anuncioRound">ROUND 1</b><span>LUTEM!</span></div>
 </div>
 <script type="module" src="game.js"></script>
 </body>

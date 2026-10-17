@@ -1,4 +1,5 @@
 // Kit compartilhado dos jogos. Funções puras primeiro (testadas em node), depois as de navegador.
+import { iniciarSimulador } from './simulador.js';
 
 export function escapar(texto) {
   return String(texto ?? '').replace(/[&<>"']/g, c =>
@@ -70,7 +71,18 @@ export function eventoFalso(campos = {}) {
   return { user, nome: user, foto: '', ...base, ...campos };
 }
 
+// A ponte só escuta em 127.0.0.1: página vinda de outro host (site publicado) não tem ponte
+// e roda em demonstração, com o simulador no próprio navegador. ?demo força localmente.
+export function ehDemo(url) {
+  const u = new URL(url);
+  if (u.searchParams.has('demo')) return true;
+  return !['localhost', '127.0.0.1', '[::1]'].includes(u.hostname);
+}
+
 /* ---------- navegador ---------- */
+
+// placar da demonstração fica separado do placar das lives de verdade
+const prefixo = () => ehDemo(location.href) ? 'gamelive-demo:' : 'gamelive:';
 
 export async function carregarConfig(url = './config.json') {
   const r = await fetch(url, { cache: 'no-store' });
@@ -79,16 +91,18 @@ export async function carregarConfig(url = './config.json') {
 }
 
 export function aplicarFundo(fundo) {
-  document.body.style.background = !fundo || fundo === 'transparente' ? 'transparent' : fundo;
+  const transparente = !fundo || fundo === 'transparente';
+  // transparente serve para sobrepor na live; na demonstração não há nada por baixo
+  document.body.style.background = !transparente ? fundo : ehDemo(location.href) ? '#0b0d17' : 'transparent';
 }
 
 export function guardar(chave, valor) {
-  try { localStorage.setItem('gamelive:' + chave, JSON.stringify(valor)); } catch { /* sem storage: segue sem salvar */ }
+  try { localStorage.setItem(prefixo() + chave, JSON.stringify(valor)); } catch { /* sem storage: segue sem salvar */ }
 }
 
 export function lembrar(chave, padrao) {
   try {
-    const v = localStorage.getItem('gamelive:' + chave);
+    const v = localStorage.getItem(prefixo() + chave);
     return v === null ? padrao : JSON.parse(v);
   } catch { return padrao; }
 }
@@ -138,7 +152,8 @@ export function foto(url) {
   return f.ok ? f.img : null;
 }
 
-// WebSocket com a ponte; reconecta sozinho e mostra o status num selo discreto.
+// WebSocket com a ponte (ou o simulador, em demonstração); reconecta sozinho e mostra o
+// status num selo discreto.
 export function conectar(aoEvento) {
   const selo = document.createElement('div');
   selo.className = 'selo-status';
@@ -153,6 +168,15 @@ export function conectar(aoEvento) {
     if (ok) timerDiscreto = setTimeout(() => selo.classList.add('discreto'), 3000);
   };
 
+  const tratar = (ev) => {
+    try { aoEvento(ev); } catch (e) { console.error('erro ao tratar evento', ev, e); }
+  };
+
+  if (ehDemo(location.href)) {
+    iniciarSimulador((ev) => ev.tipo === 'status' ? mostrar('● demonstração', true) : tratar(ev));
+    return;
+  }
+
   function abrir() {
     const ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/`);
     ws.onmessage = (m) => {
@@ -163,7 +187,7 @@ export function conectar(aoEvento) {
         else mostrar(ev.conectado ? `● ao vivo ${ev.detalhe ?? ''}` : '○ aguardando live', ev.conectado);
         return;
       }
-      try { aoEvento(ev); } catch (e) { console.error('erro ao tratar evento', ev, e); }
+      tratar(ev);
     };
     ws.onclose = () => { mostrar('○ sem ponte', false); setTimeout(abrir, 2000); };
   }

@@ -5,42 +5,123 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Corrida do Chat</title>
 <link rel="stylesheet" href="../kit/kit.css">
+<script type="importmap">{ "imports": { "three": "../kit/vendor/three.module.min.js", "three/addons/": "../kit/vendor/addons/" } }</script>
 <style>
-  .topo{position:absolute;left:40px;right:40px;top:22px}
-  .linha{display:flex;align-items:center;justify-content:space-between;gap:20px}
-  h1{margin:0;font-size:62px;font-weight:900;letter-spacing:-.02em;line-height:1.05}
-  h1 span{color:#3df2c2}
-  .volta{padding:8px 22px;border-radius:999px;background:#ffc23d;color:#0b0d17;font-size:34px;font-weight:900;white-space:nowrap}
-  .legenda{display:flex;flex-wrap:wrap;gap:8px 10px;margin-top:12px}
-  .legenda span{padding:5px 14px;border-radius:999px;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.14);font-size:27px;font-weight:800}
-  .painel{position:absolute;background:rgba(8,10,20,.72);border:2px solid rgba(255,255,255,.12);border-radius:28px;padding:16px 22px}
-  .painel h2{margin:0 0 8px;font-size:26px;font-weight:900;letter-spacing:.16em;color:rgba(255,255,255,.78)}
-  .painel ol{list-style:none;margin:0;padding:0}
-  .posicoes{left:352px;width:376px;top:530px}
-  .posicoes li{display:flex;align-items:center;gap:12px;font-size:30px;font-weight:800;line-height:44px;white-space:nowrap}
-  .posicoes li i{flex:none;width:18px;height:18px;border-radius:50%;background:var(--c)}
-  .posicoes li b{flex:none;width:52px;color:#ffc23d}
-  .posicoes li span{overflow:hidden;text-overflow:ellipsis}
-  .avisos{position:absolute;left:352px;width:376px;top:1030px}
-  .aviso{font-size:28px;padding:12px 18px;border-radius:18px}
-  .vitorias{left:40px;right:40px;top:1668px;bottom:24px}
-  .vitorias ol{display:flex;flex-wrap:wrap;gap:10px 14px}
-  .vitorias li{padding:8px 18px;border-radius:999px;background:rgba(255,255,255,.07);font-size:32px;font-weight:800;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
-  .vitorias li b{color:#ffc23d}
-  .vitorias .vazio{opacity:.8;font-weight:700;background:none;padding:8px 0}
-  .vencedor{--destaque:#ffc23d}
+  /* o autódromo e os carros são 3D (canvas WebGL do kit, atrás); aqui só o placar em HTML */
+  .veu{position:absolute;left:0;right:0;pointer-events:none;z-index:1}
+  .veu.cima{top:0;height:330px;background:linear-gradient(180deg,rgba(6,8,24,.78),rgba(6,8,24,.35) 60%,transparent)}
+  .veu.baixo{bottom:0;height:470px;background:linear-gradient(0deg,rgba(6,8,24,.92),rgba(6,8,24,.7) 62%,transparent)}
+  .transparente .veu{display:none}
+  .veu.borda{inset:0;background:radial-gradient(120% 70% at 50% 52%,transparent 58%,rgba(4,6,20,.5) 100%)}
+
+  /* topo: pilotos, volta e número da corrida */
+  .topo{position:absolute;left:24px;right:24px;top:22px;display:flex;align-items:center;justify-content:space-between;z-index:5}
+  .topo .pilula{font-size:60px;padding:8px 38px}
+  .topo .pilula.pequena{font-size:40px;padding:8px 22px;border-width:4px}
+  .titulo{position:absolute;left:0;right:0;top:122px;text-align:center;font-size:44px;color:#fff;z-index:5}
+  .titulo span{color:var(--ouro)}
+
+  /* presentes nos cantos, fora da pista */
+  .canto{position:absolute;width:190px;text-align:center;z-index:4}
+  .canto .emoji{font-size:78px}
+  .canto .efeito{font-size:34px}
+  .canto .nome{display:block;margin-top:2px;font-size:22px;font-weight:800;color:#fff;
+    text-shadow:0 2px 0 var(--contorno),0 0 6px rgba(0,0,0,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .canto.c0{left:8px;top:196px}.canto.c1{right:8px;top:196px}
+  .canto.c2{left:8px;top:1322px}.canto.c3{right:8px;top:1322px}
+  .canto.usou{animation:pop .4s cubic-bezier(.2,1.6,.4,1)}
+
+  /* miolo da pista: posições ao vivo e avisos */
+  .posicoes{position:absolute;left:388px;width:304px;top:566px;z-index:4;transition:opacity .4s}
+  .posicoes h3,.caixa h3{margin:0 0 8px 6px;font-size:34px;color:#fff}
+  .posicoes h3{font-size:30px;margin-bottom:6px}
+  .posicoes ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+  .posicoes li{display:flex;align-items:center;gap:8px;padding:3px 12px 3px 4px;border-radius:999px;
+    background:linear-gradient(90deg,color-mix(in srgb,var(--cor) 55%,rgba(14,10,32,.92)),rgba(14,10,32,.88) 75%);
+    border:3px solid rgba(255,255,255,.2);font-size:24px;font-weight:800;line-height:1.1;
+    box-shadow:0 6px 14px -6px rgba(0,0,0,.7)}
+  .posicoes li.lider{border-color:var(--ouro);box-shadow:0 0 18px rgba(255,210,63,.5)}
+  .posicoes li .pos{width:38px;text-align:center;font-family:var(--fonte-jogo);font-size:28px;color:var(--ouro)}
+  .posicoes li .avatar{--tam:40px;border-width:3px}
+  .posicoes li .quem{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .posicoes li .v{font-family:var(--fonte-jogo);font-size:21px;color:#cfe3ff;opacity:.9}
+  .posicoes .vazio{font-size:23px;padding:8px 16px;border-radius:22px;line-height:1.15;background:rgba(14,10,32,.85);border:3px solid rgba(255,255,255,.2)}
+  .avisos{position:absolute;left:382px;width:316px;top:900px;z-index:6;transition:opacity .4s}
+  .avisos .aviso{font-size:22px;padding:7px 16px;border-radius:22px;line-height:1.15;gap:8px}
+  .no-podio .posicoes,.no-podio .avisos,.no-podio .canto.c2,.no-podio .canto.c3{opacity:0}
+  .canto{transition:opacity .4s}
+  .aviso .mais{color:var(--ouro)}
+  .aviso .ruim{color:#ff5a6e}
+  .aviso .roxo{color:#c79bff}
+
+  /* chamada e contagem da largada (acima de tudo) */
+  .chamada{position:absolute;left:0;right:0;top:770px;z-index:12;text-align:center;font-size:76px;color:#3df2c2;
+    animation:pulsa .6s ease-in-out infinite alternate;pointer-events:none}
+  .chamada small{display:block;font-size:40px;color:#fff;margin-top:10px}
+  .largada{position:absolute;left:0;right:0;top:720px;z-index:12;text-align:center;font-size:260px;color:var(--ouro);pointer-events:none}
+  .largada.ja{color:#3df2c2;font-size:220px}
+  .largada.some{animation:somePraFrente .7s ease forwards}
+  @keyframes somePraFrente{to{opacity:0;transform:scale(1.8)}}
+  .banner{position:absolute;left:0;right:0;top:330px;z-index:13;text-align:center;font-size:96px;color:#fff;pointer-events:none;
+    animation:banner 2.2s cubic-bezier(.2,1.3,.4,1) both}
+  .banner small{display:block;font-size:46px;color:var(--ouro)}
+  @keyframes banner{0%{opacity:0;transform:scale(.3) rotate(-8deg)}15%{opacity:1;transform:scale(1.1)}25%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-60px)}}
+  .flash{position:absolute;inset:0;z-index:11;pointer-events:none;background:radial-gradient(circle at var(--x) var(--y),rgba(214,170,255,.75),rgba(120,80,255,.25) 30%,transparent 60%);
+    animation:flash .6s ease-out forwards}
+  @keyframes flash{to{opacity:0}}
+
+  /* rodapé: mais enviados e vitórias */
+  .caixa{position:absolute;top:1540px;z-index:4}
+  .caixa.enviados{left:24px;width:560px}
+  .caixa.vitorias{right:24px;width:452px}
+  .caixa .ranking{gap:9px}
+  .caixa .ranking-item{font-size:27px;padding:4px 18px 4px 6px;gap:12px}
+  .caixa .avatar.pequeno{--tam:50px}
+  .caixa .ranking-pos{width:44px;font-size:34px}
+  .caixa .ranking-pts{font-size:34px}
+  .caixa .vazio{font-size:26px;opacity:.9;padding:6px 10px;
+    text-shadow:0 2px 0 var(--contorno)}
+
+  /* pódio do fim da corrida: os degraus são 3D; aqui o letreiro e os 3 primeiros */
+  .podio-cab{position:absolute;left:0;right:0;top:206px;z-index:20;text-align:center;pointer-events:none}
+  .podio-cab small{display:block;font-size:44px;color:var(--ouro);letter-spacing:.04em;animation:caiAvatar .6s cubic-bezier(.2,1.5,.4,1) both}
+  .podio-cab .grande{font-size:128px;color:#fff;margin-top:6px;animation:vencedor .6s cubic-bezier(.2,1.4,.4,1) both}
+  .podio-cab ol{position:absolute;left:30px;right:30px;top:1150px;list-style:none;margin:0;padding:0;display:flex;justify-content:center;gap:14px}
+  .podio-cab li{flex:1;min-width:0;display:flex;align-items:center;gap:10px;padding:8px 16px 8px 8px;border-radius:999px;
+    background:linear-gradient(90deg,color-mix(in srgb,var(--cor) 60%,rgba(14,10,32,.95)),rgba(14,10,32,.92) 70%);
+    border:4px solid var(--cor);box-shadow:0 10px 26px -8px rgba(0,0,0,.8);font-size:30px;font-weight:800;
+    animation:caiAvatar .7s cubic-bezier(.2,1.5,.4,1) both;animation-delay:var(--atraso)}
+  .podio-cab li:first-child{order:2;flex:1.25;font-size:34px;border-color:var(--ouro);box-shadow:0 0 30px rgba(255,210,63,.55)}
+  .podio-cab li:nth-child(2){order:1}
+  .podio-cab li:nth-child(3){order:3}
+  .podio-cab .medalha{font-size:44px;line-height:1}
+  .podio-cab .avatar{--tam:58px;border-width:4px;flex:none}
+  .podio-cab .quem{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  @keyframes caiAvatar{from{opacity:0;transform:translateY(-120px) scale(.5)}}
 </style>
 </head>
 <body>
 <div class="palco">
-  <canvas id="tela" width="1080" height="1920"></canvas>
-  <header class="topo">
-    <div class="linha"><h1>CORRIDA <span>DO CHAT</span></h1><div class="volta" id="volta">VOLTA 1/3</div></div>
-    <div class="legenda" id="legenda"></div>
-  </header>
-  <section class="painel posicoes"><h2>POSIÇÕES</h2><ol id="posicoes"></ol></section>
+  <div class="veu cima"></div>
+  <div class="veu baixo"></div>
+  <div class="veu borda"></div>
+
+  <div class="topo">
+    <div class="pilula pequena" id="pilotos">🏎️ 0</div>
+    <div class="pilula" id="volta">VOLTA 1/3</div>
+    <div class="pilula pequena" id="numero">🏁 #1</div>
+  </div>
+  <div class="titulo titulo-jogo">Corrida <span>do Chat</span></div>
+
+  <div id="cantos"></div>
+
+  <section class="posicoes"><h3 class="titulo-jogo">🏁 Posições</h3><ol id="posicoes"></ol></section>
   <div class="avisos" id="avisos"></div>
-  <section class="painel vitorias"><h2>🏆 VITÓRIAS DA SESSÃO</h2><ol id="vitorias"></ol></section>
+  <div class="chamada txt-jogo" id="chamada">COMENTE<br>PARA CORRER<small>💬 qualquer mensagem entra na pista</small></div>
+  <div class="largada txt-jogo" id="largada"></div>
+
+  <section class="caixa enviados"><h3 class="titulo-jogo">🔥 Mais enviados</h3><ol class="ranking" id="ranking"></ol></section>
+  <section class="caixa vitorias"><h3 class="titulo-jogo">🏆 Vitórias</h3><ol class="ranking" id="vitorias"></ol></section>
 </div>
 <script type="module" src="game.js"></script>
 </body>

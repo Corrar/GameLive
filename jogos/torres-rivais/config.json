@@ -1,9 +1,11 @@
 {
   "titulo": "TORRES RIVAIS",
-  "fundo": "#0b0d17",
+  "fundo": "cenario",
+  "qualidade": "alta",
+  "som": true,
   "times": [
-    { "nome": "Time Menta", "cor": "#3df2c2" },
-    { "nome": "Time Rosa", "cor": "#ff3d7f" }
+    { "nome": "Time Menta", "cor": "#3df2c2", "imagem": "" },
+    { "nome": "Time Rosa", "cor": "#ff3d7f", "imagem": "" }
   ],
   "palavras": { "A": ["A", "1"], "B": ["B", "2"] },
   "meta": 2000,

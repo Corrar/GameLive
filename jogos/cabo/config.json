@@ -1,6 +1,8 @@
 {
   "titulo": "CABO DE GUERRA",
-  "fundo": "#0b0d17",
+  "fundo": "arena",
+  "qualidade": "alta",
+  "som": true,
   "times": [
     { "nome": "Meninos", "cor": "#3df2c2" },
     { "nome": "Meninas", "cor": "#ff3d7f" }
